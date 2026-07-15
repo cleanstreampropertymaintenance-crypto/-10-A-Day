@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>Ad Budget Optimizer</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🎯</text></svg>">
 <style>
 *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
 
@@ -404,8 +405,76 @@ function load() {
   } catch (e) {}
   return defaults();
 }
-function save() { localStorage.setItem(LS_KEY, JSON.stringify(state)); }
+function save() { localStorage.setItem(LS_KEY, JSON.stringify(state)); pushState(); }
 function uid() { return Math.random().toString(36).slice(2, 10) + Date.now().toString(36); }
+
+/* ═══════════ remote sync (when served by server.js, e.g. on Railway) ═══════════ */
+let REMOTE = false;
+let authKey = localStorage.getItem(LS_KEY + '.key') || '';
+let syncTimer = null;
+
+async function api(path, opts = {}) {
+  const r = await fetch(path, { ...opts, headers: { 'Content-Type': 'application/json', 'X-App-Key': authKey, ...(opts.headers || {}) } });
+  if (r.status === 401) { const e = new Error('unauthorized'); e.auth = true; throw e; }
+  if (!r.ok) throw new Error('http ' + r.status);
+  return r.json();
+}
+function pushState() {
+  if (!REMOTE) return;
+  clearTimeout(syncTimer);
+  syncTimer = setTimeout(() => {
+    api('/api/state', { method: 'PUT', body: JSON.stringify(state) }).catch(() => {});
+  }, 400);
+}
+async function initRemote() {
+  let data;
+  try {
+    data = await api('/api/state');
+  } catch (e) {
+    if (!e || !e.auth) return; // no server behind this page → stay in browser-only mode
+    while (true) {
+      const k = prompt('This tracker is password-protected.\nEnter the app password:');
+      if (k == null) return;
+      authKey = k.trim();
+      try { data = await api('/api/state'); break; }
+      catch (e2) { if (!e2 || !e2.auth) return; alert('Wrong password, try again.'); }
+    }
+    localStorage.setItem(LS_KEY + '.key', authKey);
+  }
+  REMOTE = true;
+  if (data.state && Array.isArray(data.state.sources)) state = data.state;
+  else pushState(); // first run: seed the server with what this browser has
+  save(); renderAll();
+  pollInbox();
+  setInterval(pollInbox, 60000);
+  window.addEventListener('focus', pollInbox);
+}
+/* pull leads the CRM webhook dropped off, turn them into leads needing a source */
+let pollingInbox = false;
+async function pollInbox() {
+  if (!REMOTE || pollingInbox) return;
+  pollingInbox = true;
+  try {
+    const { events } = await api('/api/inbox');
+    if (events && events.length) {
+      let added = 0;
+      for (const ev of events) {
+        if (state.leads.some(l => l.crmId === ev.id)) continue;
+        state.leads.push({
+          id: uid(), crmId: ev.id, sourceId: null,
+          date: (ev.receivedAt || new Date().toISOString()).slice(0, 10),
+          name: ev.name || 'CRM lead', phone: ev.phone || '',
+          notes: ['from CRM', ev.eventType, ev.address].filter(Boolean).join(' · '),
+          status: 'new', job: null,
+        });
+        added++;
+      }
+      await api('/api/inbox/consume', { method: 'POST', body: JSON.stringify({ ids: events.map(e => e.id) }) });
+      if (added) { save(); renderAll(); }
+    }
+  } catch (e) {}
+  pollingInbox = false;
+}
 
 /* ═══════════════════════ helpers ═══════════════════════ */
 const $ = id => document.getElementById(id);
@@ -542,12 +611,16 @@ function renderDash() {
   html += `<tr><td class="src">Total</td><td><b>${fmt$(t.spend)}</b></td><td><b>${t.leads}</b></td><td><b>${fmt$(t.cpl)}</b></td><td><b>${t.won}</b></td><td><b>${fmt$(t.revenue)}</b></td><td><b>${fmtX(t.roas)}</b></td></tr>`;
   $('srcTable').innerHTML = html;
 
-  // weekly nudge
+  // banners: unassigned CRM leads + weekly nudge
+  const unassigned = state.leads.filter(l => !l.sourceId && l.status !== 'lost').length;
   const last = state.settings.lastRunAt;
   const daysSince = last ? Math.floor((Date.now() - new Date(last).getTime()) / 86400000) : null;
-  $('weeklyNudge').innerHTML = (last == null || daysSince >= 7)
-    ? `<div class="banner">🎯 ${last == null ? 'You haven’t run the optimizer yet.' : `It’s been ${daysSince} days since your last budget review.`} <b>Run the weekly analysis</b> in the Optimizer tab to see where your money should move.</div>`
-    : '';
+  let banners = '';
+  if (unassigned > 0) banners += `<div class="banner" style="border-left-color:var(--bad);cursor:pointer;" id="unassignedBanner">📥 <b>${unassigned} lead${unassigned===1?'':'s'} from your CRM need${unassigned===1?'s':''} a source.</b> Tap here to assign which ad each one came from — they don’t count toward ROAS until you do.</div>`;
+  if (last == null || daysSince >= 7) banners += `<div class="banner">🎯 ${last == null ? 'You haven’t run the optimizer yet.' : `It’s been ${daysSince} days since your last budget review.`} <b>Run the weekly analysis</b> in the Optimizer tab to see where your money should move.</div>`;
+  $('weeklyNudge').innerHTML = banners;
+  const ub = $('unassignedBanner');
+  if (ub) ub.addEventListener('click', () => document.querySelector('.nav button[data-page="leads"]').click());
 }
 
 function renderBarChart(elId, rows, getVal, fmtVal, tipHtml, emptyMsg) {
@@ -609,10 +682,11 @@ function renderLeads() {
     const job = l.status === 'won' && l.job
       ? `<span class="tag" style="color:var(--good);border-color:var(--good)">${fmt$(jobAnnualValue(l.job))}${l.job.freq !== 'onetime' ? '/yr · ' + FREQ[l.job.freq].label.toLowerCase() : ''}</span>`
       : '';
+    const needsSrc = !src ? `<span class="tag" style="color:var(--bad);border-color:var(--bad)">⚠ pick source</span>` : '';
     return `<div class="row">
       <div class="grow" data-edit-lead="${l.id}" style="cursor:pointer;">
-        <div class="title">${esc(l.name || 'Lead')} ${job}</div>
-        <div class="meta">${fmtDate(l.date)} · <span class="dot" style="display:inline-block;background:${src?sourceColor(src):'var(--ink-muted)'};vertical-align:-1px;"></span> ${esc(src ? src.name : 'Unknown')}${l.notes ? ' · ' + esc(l.notes) : ''}</div>
+        <div class="title">${esc(l.name || 'Lead')} ${needsSrc} ${job}</div>
+        <div class="meta">${fmtDate(l.date)} · <span class="dot" style="display:inline-block;background:${src?sourceColor(src):'var(--ink-muted)'};vertical-align:-1px;"></span> ${esc(src ? src.name : 'tap to assign the ad source')}${l.notes ? ' · ' + esc(l.notes) : ''}</div>
       </div>
       <select class="status-sel st-${l.status}" data-status-lead="${l.id}">
         ${STATUSES.map(s => `<option value="${s}" ${l.status===s?'selected':''}>${STATUS_LABEL[s]}</option>`).join('')}
@@ -928,7 +1002,7 @@ function openLeadModal(lead) {
     <input id="mLeadName" type="text" placeholder="e.g. Sarah — gutter cleaning" value="${isEdit ? esc(lead.name) : ''}">
     <div class="f2">
       <div><label class="f">Source</label>
-        <select id="mLeadSource">${srcs.map(s => `<option value="${s.id}" ${isEdit && lead.sourceId===s.id?'selected':''}>${esc(s.name)}</option>`).join('')}</select>
+        <select id="mLeadSource">${isEdit && !lead.sourceId ? '<option value="" selected>— pick ad source —</option>' : ''}${srcs.map(s => `<option value="${s.id}" ${isEdit && lead.sourceId===s.id?'selected':''}>${esc(s.name)}</option>`).join('')}</select>
       </div>
       <div><label class="f">Date</label><input id="mLeadDate" type="date" value="${isEdit ? lead.date : todayStr()}"></div>
     </div>
@@ -944,7 +1018,7 @@ function openLeadModal(lead) {
     const name = $('mLeadName').value.trim();
     if (!name) { alert('Give the lead a name.'); return; }
     if (isEdit) {
-      lead.name = name; lead.sourceId = $('mLeadSource').value; lead.date = $('mLeadDate').value || todayStr();
+      lead.name = name; lead.sourceId = $('mLeadSource').value || null; lead.date = $('mLeadDate').value || todayStr();
       lead.phone = $('mLeadPhone').value.trim(); lead.notes = $('mLeadNotes').value.trim();
     } else {
       state.leads.push({ id: uid(), sourceId: $('mLeadSource').value, date: $('mLeadDate').value || todayStr(),
@@ -1029,7 +1103,7 @@ function openSourceModal(src) {
 /* ═══════════════════════ render all ═══════════════════════ */
 function renderAll() {
   const total = activeSources().reduce((a, s) => a + (s.dailyBudget || 0), 0);
-  $('headerSub').textContent = total > 0 ? fmt$(total) + '/day across ' + activeSources().length + ' sources' : 'Track spend → leads → jobs → ROAS';
+  $('headerSub').textContent = (total > 0 ? fmt$(total) + '/day across ' + activeSources().length + ' sources' : 'Track spend → leads → jobs → ROAS') + (REMOTE ? ' · CRM sync on' : '');
   renderDash();
   renderLeads();
   renderSpendForm();
@@ -1039,6 +1113,7 @@ function renderAll() {
   renderSettings();
 }
 renderAll();
+initRemote();
 </script>
 </body>
 </html>

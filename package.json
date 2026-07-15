@@ -1,0 +1,16 @@
+{
+  "name": "ad-budget-optimizer",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Track ad spend, leads, and ROAS per source, receive CRM webhooks, and get weekly budget-shift recommendations.",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "express": "^4.19.2"
+  }
+}
