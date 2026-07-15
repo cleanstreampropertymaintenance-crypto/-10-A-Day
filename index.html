@@ -1,1542 +1,1044 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-  <title>Noelles Wants</title>
-  <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.2/Sortable.min.js"></script>
-  <style>
-    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Ad Budget Optimizer</title>
+<style>
+*, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
 
-    /* ── CSS THEME VARIABLES ── */
-    :root {
-      --accent:    #FF9900;
-      --dark:      #131921;
-      --highlight: #B12704;
-    }
+:root {
+  color-scheme: light;
+  --page:        #f9f9f7;
+  --surface:     #fcfcfb;
+  --ink:         #0b0b0b;
+  --ink-2:       #52514e;
+  --ink-muted:   #898781;
+  --grid:        #e1e0d9;
+  --baseline:    #c3c2b7;
+  --ring:        rgba(11,11,11,0.10);
+  --accent:      #2a78d6;   /* sequential blue, light step */
+  --accent-soft: #cde2fb;
+  --good:        #006300;
+  --bad:         #d03b3b;
+  --warn:        #fab219;
+  --chip-1: #2a78d6; --chip-2: #008300; --chip-3: #e87ba4; --chip-4: #eda100;
+  --chip-5: #1baf7a; --chip-6: #eb6834; --chip-7: #4a3aa7; --chip-8: #e34948;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    color-scheme: dark;
+    --page:        #0d0d0d;
+    --surface:     #1a1a19;
+    --ink:         #ffffff;
+    --ink-2:       #c3c2b7;
+    --ink-muted:   #898781;
+    --grid:        #2c2c2a;
+    --baseline:    #383835;
+    --ring:        rgba(255,255,255,0.10);
+    --accent:      #3987e5;
+    --accent-soft: #10305a;
+    --good:        #0ca30c;
+    --bad:         #e66767;
+    --chip-1: #3987e5; --chip-2: #008300; --chip-3: #d55181; --chip-4: #c98500;
+    --chip-5: #199e70; --chip-6: #d95926; --chip-7: #9085e9; --chip-8: #e66767;
+  }
+}
 
-    body {
-      font-family: Arial, "Helvetica Neue", sans-serif;
-      background: #EAEDED;
-      min-height: 100vh;
-      color: #0F1111;
-    }
+html { -webkit-text-size-adjust: 100%; }
+body {
+  font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+  background: var(--page);
+  color: var(--ink);
+  min-height: 100vh;
+  padding-bottom: calc(64px + env(safe-area-inset-bottom));
+}
 
-    /* ══════════════════════════════════════
-       HEADER
-    ══════════════════════════════════════ */
-    .header {
-      background: var(--dark);
-      padding: 10px 16px;
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      position: sticky;
-      top: 0;
-      z-index: 500;
-    }
-    .logo {
-      color: white;
-      font-size: 20px;
-      font-weight: 900;
-      letter-spacing: -0.5px;
-      white-space: nowrap;
-    }
-    .header-search { flex: 1; display: flex; border-radius: 4px; overflow: hidden; }
-    .header-search input { flex: 1; padding: 9px 12px; font-size: 14px; border: none; outline: none; background: white; }
-    .search-btn { background: var(--accent); border: none; padding: 0 14px; font-size: 18px; cursor: pointer; }
-    .search-btn:hover { filter: brightness(0.9); }
-    .header-right { display: flex; align-items: center; gap: 12px; }
-    .add-header-btn {
-      background: var(--accent); border: none; color: #131921;
-      font-weight: 700; font-size: 13px; padding: 8px 14px;
-      border-radius: 4px; cursor: pointer; white-space: nowrap;
-    }
-    .add-header-btn:hover { filter: brightness(0.9); }
-    .cart-icon { color: white; font-size: 22px; }
+/* ── header ── */
+.header {
+  position: sticky; top: 0; z-index: 50;
+  background: var(--surface);
+  border-bottom: 1px solid var(--grid);
+  padding: 12px 16px;
+  display: flex; align-items: center; justify-content: space-between; gap: 8px;
+}
+.header h1 { font-size: 17px; font-weight: 800; letter-spacing: -0.2px; }
+.header .sub { font-size: 12px; color: var(--ink-muted); }
 
-    /* ══════════════════════════════════════
-       NAVBAR TABS
-    ══════════════════════════════════════ */
-    .navbar {
-      background: color-mix(in srgb, var(--dark) 75%, white 25%);
-      padding: 0 16px;
-      display: flex;
-      align-items: center;
-    }
-    .nav-tab {
-      color: rgba(255,255,255,0.75);
-      text-decoration: none;
-      font-size: 14px;
-      font-weight: 600;
-      padding: 11px 18px;
-      cursor: pointer;
-      border-bottom: 3px solid transparent;
-      transition: color 0.15s, border-color 0.15s;
-      white-space: nowrap;
-      user-select: none;
-    }
-    .nav-tab:hover { color: white; }
-    .nav-tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+/* ── layout ── */
+.page { display: none; padding: 14px 14px 24px; max-width: 760px; margin: 0 auto; }
+.page.active { display: block; }
+.card {
+  background: var(--surface);
+  border: 1px solid var(--ring);
+  border-radius: 12px;
+  padding: 14px;
+  margin-bottom: 12px;
+}
+.card h2 { font-size: 13px; font-weight: 700; color: var(--ink-2); text-transform: uppercase; letter-spacing: 0.4px; margin-bottom: 10px; }
+.muted { color: var(--ink-muted); font-size: 12.5px; }
+.small { font-size: 12px; }
 
-    /* ══════════════════════════════════════
-       MAIN CONTENT
-    ══════════════════════════════════════ */
-    #mainContent {
-      min-height: calc(100vh - 104px);
-      background: #EAEDED;
-      background-size: cover;
-      background-position: center;
-      background-attachment: fixed;
-    }
+/* ── range pills / filters ── */
+.pill-row { display: flex; gap: 6px; margin-bottom: 12px; flex-wrap: wrap; }
+.pill {
+  border: 1px solid var(--grid); background: var(--surface); color: var(--ink-2);
+  border-radius: 999px; padding: 6px 13px; font-size: 12.5px; font-weight: 600; cursor: pointer;
+}
+.pill.on { background: var(--accent); border-color: var(--accent); color: #fff; }
 
-    /* ── White box (universal readable container) ── */
-    .white-box {
-      background: white;
-      border-radius: 12px;
-      box-shadow: 0 2px 10px rgba(0,0,0,0.12);
-    }
+/* ── KPI tiles ── */
+.kpi-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+@media (max-width: 480px) { .kpi-grid { grid-template-columns: repeat(2, 1fr); } }
+.kpi {
+  background: var(--surface); border: 1px solid var(--ring); border-radius: 12px;
+  padding: 12px 12px 10px;
+}
+.kpi .lbl { font-size: 11.5px; font-weight: 600; color: var(--ink-muted); margin-bottom: 4px; }
+.kpi .val { font-size: 22px; font-weight: 800; letter-spacing: -0.3px; }
+.kpi .delta { font-size: 11.5px; font-weight: 600; margin-top: 3px; }
+.delta.up { color: var(--good); }
+.delta.down { color: var(--bad); }
+.delta.flat { color: var(--ink-muted); }
 
-    /* ══════════════════════════════════════
-       PRODUCTS PAGE
-    ══════════════════════════════════════ */
-    .budget-box {
-      margin: 14px 14px 0;
-      padding: 12px 16px;
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      flex-wrap: wrap;
-    }
-    .budget-label { font-size: 14px; font-weight: 700; white-space: nowrap; color: #131921; }
-    .budget-input-wrap {
-      display: flex; align-items: center; background: #f5f5f5;
-      border-radius: 6px; overflow: hidden; border: 2px solid #ddd; transition: border-color 0.15s;
-    }
-    .budget-input-wrap:focus-within { border-color: var(--accent); }
-    .budget-dollar { padding: 0 8px; color: #555; font-weight: bold; }
-    .budget-input-wrap input { border: none; outline: none; padding: 7px 6px 7px 0; font-size: 15px; width: 110px; background: transparent; }
-    .budget-badge { background: var(--accent); color: #131921; font-weight: 700; font-size: 13px; padding: 5px 12px; border-radius: 12px; white-space: nowrap; }
-    .budget-clear { background: none; border: 1px solid #ccc; color: #666; font-size: 12px; padding: 5px 10px; border-radius: 4px; cursor: pointer; }
-    .budget-clear:hover { background: #f0f0f0; }
+/* ── bar chart ── */
+.bars { display: flex; flex-direction: column; gap: 9px; }
+.bar-row { display: grid; grid-template-columns: minmax(96px, 28%) 1fr; align-items: center; gap: 8px; }
+.bar-row .name { font-size: 12.5px; font-weight: 600; color: var(--ink-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display:flex; align-items:center; gap:6px; }
+.dot { width: 9px; height: 9px; border-radius: 50%; flex: none; }
+.bar-track { position: relative; height: 22px; display: flex; align-items: center; }
+.bar-fill {
+  height: 16px; min-width: 3px; background: var(--accent);
+  border-radius: 0 4px 4px 0; cursor: default;
+}
+.bar-val { font-size: 12px; font-weight: 700; margin-left: 7px; color: var(--ink); white-space: nowrap; }
+.axis-note { font-size: 11px; color: var(--ink-muted); margin-top: 8px; }
 
-    .results-box { margin: 8px 14px 0; padding: 9px 16px; font-size: 13px; color: #555; }
-    .results-box span { font-weight: 700; color: #131921; }
+/* tooltip */
+#tip {
+  position: fixed; z-index: 200; display: none; pointer-events: none;
+  background: var(--surface); border: 1px solid var(--grid); border-radius: 8px;
+  box-shadow: 0 4px 14px rgba(0,0,0,0.18);
+  padding: 8px 10px; font-size: 12px; color: var(--ink); max-width: 240px;
+}
+#tip .t-head { font-weight: 700; margin-bottom: 3px; }
+#tip .t-line { color: var(--ink-2); }
 
-    /* ── Product Grid ── */
-    .product-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 12px; padding: 12px 14px 20px; }
+/* ── table ── */
+.tbl-wrap { overflow-x: auto; }
+table { border-collapse: collapse; width: 100%; font-size: 12.5px; }
+th { text-align: right; font-weight: 600; color: var(--ink-muted); padding: 6px 8px; border-bottom: 1px solid var(--grid); white-space: nowrap; }
+th:first-child, td:first-child { text-align: left; }
+td { padding: 7px 8px; border-bottom: 1px solid var(--grid); text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+tr:last-child td { border-bottom: none; }
+td.src { font-weight: 600; }
 
-    /* ── Product Card ── */
-    .product-card {
-      background: white; border-radius: 12px; overflow: hidden; cursor: pointer;
-      transition: box-shadow 0.2s, transform 0.15s; display: flex; flex-direction: column;
-      border: 1px solid #e0e0e0; position: relative; box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-    }
-    .product-card:hover { box-shadow: 0 6px 20px rgba(0,0,0,0.18); transform: translateY(-2px); }
-    .product-card.out-of-budget { opacity: 0.55; }
-    .product-card.out-of-budget .product-img-wrap { filter: grayscale(40%); }
-    .over-budget-tag { position: absolute; top: 8px; right: 8px; background: var(--highlight); color: white; font-size: 10px; font-weight: 700; padding: 3px 7px; border-radius: 3px; }
-    .in-budget-tag  { position: absolute; top: 8px; right: 8px; background: #007600; color: white; font-size: 10px; font-weight: 700; padding: 3px 7px; border-radius: 3px; }
-    .product-img-wrap { width: 100%; height: 190px; display: flex; align-items: center; justify-content: center; background: #fff; padding: 12px; overflow: hidden; }
-    .product-img-wrap img { max-width: 100%; max-height: 100%; object-fit: contain; transition: transform 0.2s; }
-    .product-card:hover .product-img-wrap img { transform: scale(1.04); }
-    .product-info { padding: 10px 12px 14px; flex: 1; display: flex; flex-direction: column; gap: 5px; }
-    .product-title { font-size: 13.5px; line-height: 1.45; color: #0F1111; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
-    .product-price-row { display: flex; align-items: baseline; gap: 4px; margin-top: 4px; }
-    .price-symbol { font-size: 13px; color: var(--highlight); vertical-align: super; }
-    .price-whole  { font-size: 22px; color: var(--highlight); font-weight: 700; line-height: 1; }
-    .price-frac   { font-size: 13px; color: var(--highlight); vertical-align: super; }
-    .prime-row { display: flex; align-items: center; gap: 5px; }
-    .prime-logo { background: #00A8E0; color: white; font-size: 11px; font-weight: 900; padding: 1px 5px; border-radius: 2px; }
-    .prime-text { font-size: 11px; color: #00A8E0; }
-    .add-to-cart-mini { margin-top: auto; background: var(--accent); border: none; border-radius: 6px; padding: 7px; font-size: 12px; font-weight: 700; cursor: pointer; width: 100%; }
-    .add-to-cart-mini:hover { filter: brightness(0.9); }
+/* ── buttons / forms ── */
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+  border: none; border-radius: 10px; padding: 11px 16px;
+  font-size: 14px; font-weight: 700; cursor: pointer;
+  background: var(--accent); color: #fff; width: 100%;
+}
+.btn.secondary { background: transparent; color: var(--ink-2); border: 1px solid var(--grid); }
+.btn.danger { background: transparent; color: var(--bad); border: 1px solid var(--grid); }
+.btn.sm { width: auto; padding: 7px 12px; font-size: 12.5px; border-radius: 8px; }
+.btn-row { display: flex; gap: 8px; }
+.btn-row .btn { flex: 1; }
 
-    /* ── Empty State ── */
-    .empty-state { margin: 40px 14px; padding: 60px 20px; text-align: center; color: #555; }
-    .empty-icon { font-size: 64px; margin-bottom: 16px; }
-    .empty-state h2 { font-size: 22px; margin-bottom: 8px; color: #131921; }
-    .empty-state p { font-size: 15px; margin-bottom: 24px; }
-    .empty-add-btn { background: var(--accent); border: none; padding: 12px 28px; border-radius: 6px; font-size: 15px; font-weight: 700; cursor: pointer; }
-    .empty-add-btn:hover { filter: brightness(0.9); }
+label.f { display: block; font-size: 12px; font-weight: 600; color: var(--ink-2); margin: 10px 0 4px; }
+input, select, textarea {
+  width: 100%; padding: 10px 11px; font-size: 15px;
+  border: 1px solid var(--grid); border-radius: 9px;
+  background: var(--surface); color: var(--ink); outline: none;
+}
+input:focus, select:focus, textarea:focus { border-color: var(--accent); }
+.f2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
 
-    /* ══════════════════════════════════════
-       TOP 10 PAGE
-    ══════════════════════════════════════ */
-    #page-top10 { padding: 14px; }
+/* ── list rows ── */
+.row {
+  display: flex; align-items: center; gap: 10px;
+  padding: 11px 2px; border-bottom: 1px solid var(--grid);
+}
+.row:last-child { border-bottom: none; }
+.row .grow { flex: 1; min-width: 0; }
+.row .title { font-size: 14px; font-weight: 600; }
+.row .meta { font-size: 12px; color: var(--ink-muted); margin-top: 1px; }
+.row .amt { font-size: 14px; font-weight: 700; font-variant-numeric: tabular-nums; }
 
-    .top10-header { margin-bottom: 14px; padding: 18px 20px; }
-    .top10-header h2 { font-size: 22px; margin-bottom: 4px; }
-    .top10-header p  { font-size: 14px; color: #666; }
+.status-sel {
+  width: auto; font-size: 12px; font-weight: 700; padding: 5px 26px 5px 9px; border-radius: 999px;
+}
+.st-new      { color: var(--accent); border-color: var(--accent); }
+.st-contacted{ color: var(--ink-2); }
+.st-quoted   { color: #b07400; border-color: #b07400; }
+.st-won      { color: var(--good); border-color: var(--good); }
+.st-lost     { color: var(--ink-muted); }
 
-    .ranking-list { padding: 0; }
+.tag {
+  display: inline-flex; align-items: center; gap: 5px;
+  font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 999px;
+  border: 1px solid var(--grid); color: var(--ink-2);
+}
 
-    .rank-item {
-      display: flex; align-items: center; gap: 12px;
-      padding: 12px 14px; margin-bottom: 10px;
-      border-radius: 12px; background: white;
-      border: 1px solid #e0e0e0; box-shadow: 0 2px 8px rgba(0,0,0,0.07);
-      user-select: none;
-    }
-    .rank-item.sortable-ghost  { opacity: 0.4; background: #f0f8ff; }
-    .rank-item.sortable-chosen { box-shadow: 0 8px 24px rgba(0,0,0,0.2); }
+/* ── optimizer ── */
+.rec-card { border: 1px solid var(--grid); border-radius: 10px; padding: 11px 12px; margin-bottom: 8px; }
+.rec-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.rec-head .nm { font-weight: 700; font-size: 14px; display: flex; align-items: center; gap: 7px; }
+.rec-move { font-size: 14px; font-weight: 800; font-variant-numeric: tabular-nums; }
+.rec-move.up { color: var(--good); }
+.rec-move.down { color: var(--bad); }
+.rec-move.flat { color: var(--ink-muted); }
+.rec-body { font-size: 12.5px; color: var(--ink-2); margin-top: 5px; line-height: 1.45; }
+.rec-budget { font-size: 12px; color: var(--ink-muted); margin-top: 4px; font-variant-numeric: tabular-nums; }
+.banner {
+  border: 1px solid var(--grid); border-left: 4px solid var(--warn);
+  border-radius: 10px; padding: 10px 12px; margin-bottom: 12px;
+  font-size: 13px; background: var(--surface);
+}
 
-    .rank-number {
-      width: 32px; height: 32px; background: var(--dark); color: white;
-      font-size: 15px; font-weight: 900; border-radius: 50%;
-      display: flex; align-items: center; justify-content: center; flex-shrink: 0;
-    }
-    .rank-number.gold   { background: #FFD700; color: #333; }
-    .rank-number.silver { background: #C0C0C0; color: #333; }
-    .rank-number.bronze { background: #CD7F32; color: white; }
+/* ── bottom nav ── */
+.nav {
+  position: fixed; bottom: 0; left: 0; right: 0; z-index: 60;
+  display: flex; background: var(--surface);
+  border-top: 1px solid var(--grid);
+  padding-bottom: env(safe-area-inset-bottom);
+}
+.nav button {
+  flex: 1; background: none; border: none; cursor: pointer;
+  padding: 8px 0 7px; font-size: 10.5px; font-weight: 600; color: var(--ink-muted);
+  display: flex; flex-direction: column; align-items: center; gap: 2px;
+}
+.nav button .ic { font-size: 19px; line-height: 1; }
+.nav button.on { color: var(--accent); }
 
-    .drag-handle { font-size: 20px; color: #aaa; cursor: grab; padding: 0 2px; flex-shrink: 0; line-height: 1; letter-spacing: -2px; }
-    .drag-handle:active { cursor: grabbing; }
-
-    .rank-img { width: 54px; height: 54px; object-fit: contain; border-radius: 6px; border: 1px solid #eee; flex-shrink: 0; background: white; }
-    .rank-info { flex: 1; min-width: 0; }
-    .rank-title { font-size: 13px; font-weight: 700; line-height: 1.4; color: #0F1111; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .rank-price { font-size: 15px; color: var(--highlight); font-weight: 700; margin-top: 2px; }
-
-    .rank-remove {
-      background: none; border: 1px solid #ddd; color: #999;
-      font-size: 18px; width: 30px; height: 30px; border-radius: 50%;
-      display: flex; align-items: center; justify-content: center;
-      cursor: pointer; flex-shrink: 0; line-height: 1; transition: all 0.15s;
-    }
-    .rank-remove:hover { background: #fce4e4; border-color: var(--highlight); color: var(--highlight); }
-
-    .rank-empty-slot {
-      display: flex; align-items: center; gap: 12px;
-      padding: 12px 14px; margin-bottom: 10px;
-      border-radius: 12px; background: white; border: 2px dashed #ddd; color: #aaa;
-    }
-    .rank-empty-num {
-      width: 32px; height: 32px; background: #f0f0f0; border-radius: 50%;
-      display: flex; align-items: center; justify-content: center;
-      font-size: 14px; font-weight: 700; color: #aaa; flex-shrink: 0;
-    }
-
-    .rank-add-btn { display: block; width: 100%; background: var(--accent); border: none; padding: 14px; border-radius: 12px; font-size: 15px; font-weight: 700; cursor: pointer; margin-top: 6px; }
-    .rank-add-btn:hover { filter: brightness(0.9); }
-
-    .top10-empty { text-align: center; padding: 40px 20px; color: #666; font-size: 15px; }
-    .top10-empty p { margin-bottom: 12px; }
-
-    /* Picker modal */
-    .picker-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; max-height: 55vh; overflow-y: auto; padding: 4px; }
-    .picker-item {
-      display: flex; flex-direction: column; align-items: center; gap: 6px;
-      padding: 10px 8px; border-radius: 10px; border: 2px solid #eee;
-      cursor: pointer; transition: border-color 0.15s, background 0.15s; background: white;
-    }
-    .picker-item:hover { border-color: var(--accent); background: #fffbf0; }
-    .picker-item img { width: 70px; height: 70px; object-fit: contain; }
-    .picker-item-title { font-size: 12px; text-align: center; line-height: 1.4; color: #0F1111; }
-    .picker-item-price { font-size: 13px; color: var(--highlight); font-weight: 700; }
-
-    /* ══════════════════════════════════════
-       SETTINGS PAGE
-    ══════════════════════════════════════ */
-    #page-settings { padding: 14px; }
-
-    .settings-section { padding: 22px 20px; margin-bottom: 14px; }
-    .settings-section h2 { font-size: 20px; margin-bottom: 16px; }
-    .settings-section h3 { font-size: 16px; font-weight: 700; margin-bottom: 6px; color: #131921; }
-    .settings-section p  { font-size: 13px; color: #666; margin-bottom: 16px; }
-    .settings-divider { border: none; border-top: 1px solid #eee; margin: 22px 0; }
-
-    /* Theme color pickers */
-    .theme-row { display: flex; gap: 16px; flex-wrap: wrap; margin-bottom: 14px; }
-    .theme-swatch {
-      display: flex; flex-direction: column; align-items: center; gap: 8px;
-      cursor: pointer;
-    }
-    .theme-swatch label { font-size: 12px; font-weight: 700; color: #555; text-align: center; cursor: pointer; }
-    .color-picker-wrap {
-      position: relative; width: 56px; height: 56px;
-      border-radius: 50%; overflow: hidden;
-      border: 3px solid #ddd; transition: border-color 0.15s;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.15);
-    }
-    .color-picker-wrap:hover { border-color: #aaa; }
-    .color-picker-wrap input[type="color"] {
-      position: absolute; inset: -8px;
-      width: calc(100% + 16px); height: calc(100% + 16px);
-      border: none; outline: none; cursor: pointer; padding: 0;
-    }
-    .theme-reset-btn {
-      background: none; border: 1px solid #ccc; color: #555;
-      padding: 8px 16px; border-radius: 6px; font-size: 13px; cursor: pointer;
-    }
-    .theme-reset-btn:hover { background: #f0f0f0; }
-
-    /* Background upload */
-    .bg-upload-btn { display: inline-block; background: var(--dark); color: white; padding: 11px 20px; border-radius: 8px; font-size: 14px; font-weight: 700; cursor: pointer; }
-    .bg-upload-btn:hover { filter: brightness(1.2); }
-    #bgFileInput { display: none; }
-    .bg-preview-wrap { margin-top: 16px; border-radius: 10px; overflow: hidden; border: 2px solid #eee; max-height: 180px; }
-    .bg-preview-wrap img { width: 100%; height: 180px; object-fit: cover; display: block; }
-    .bg-remove-btn { display: block; width: 100%; margin-top: 10px; background: none; border: 1px solid var(--highlight); color: var(--highlight); padding: 10px; border-radius: 8px; font-size: 14px; cursor: pointer; }
-    .bg-remove-btn:hover { background: #fce4e4; }
-    .danger-btn { display: block; width: 100%; background: none; border: 1px solid var(--highlight); color: var(--highlight); padding: 12px; border-radius: 8px; font-size: 14px; font-weight: 700; cursor: pointer; }
-    .danger-btn:hover { background: #fce4e4; }
-
-    /* ══════════════════════════════════════
-       MODAL BASE
-    ══════════════════════════════════════ */
-    .modal-overlay {
-      display: none; position: fixed; inset: 0;
-      background: rgba(0,0,0,0.55); z-index: 1000; overflow-y: auto; padding: 20px;
-    }
-    .modal-overlay.active { display: flex; align-items: flex-start; justify-content: center; }
-
-    /* ── Add Product Modal ── */
-    .add-modal { background: white; width: 100%; max-width: 480px; border-radius: 14px; padding: 28px 24px; margin: auto; position: relative; }
-    .modal-close { position: absolute; top: 14px; right: 16px; background: none; border: none; font-size: 22px; cursor: pointer; color: #666; line-height: 1; }
-    .modal-close:hover { color: #131921; }
-    .add-modal h2  { font-size: 20px; margin-bottom: 6px; }
-    .add-modal > p { font-size: 13px; color: #666; margin-bottom: 20px; }
-    .input-group { margin-bottom: 14px; }
-    .input-group label { display: block; font-size: 13px; font-weight: 700; margin-bottom: 5px; }
-    .input-group input, .input-group textarea {
-      width: 100%; padding: 10px 12px; border: 1px solid #ccc;
-      border-radius: 6px; font-size: 14px; outline: none; font-family: inherit; transition: border-color 0.15s;
-    }
-    .input-group input:focus, .input-group textarea:focus { border-color: var(--accent); box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 25%, transparent); }
-    .input-group textarea { resize: vertical; min-height: 70px; }
-    .fetch-btn { width: 100%; background: var(--accent); border: none; padding: 12px; border-radius: 6px; font-size: 15px; font-weight: 700; cursor: pointer; }
-    .fetch-btn:hover { filter: brightness(0.9); }
-    .fetch-btn:disabled { background: #ccc; cursor: not-allowed; filter: none; }
-    .fetch-status { text-align: center; font-size: 13px; margin-top: 12px; min-height: 18px; color: #555; }
-    .fetch-status.error   { color: var(--highlight); }
-    .fetch-status.success { color: #007600; }
-    .manual-link { text-align: center; margin-top: 14px; font-size: 13px; color: #0066c0; cursor: pointer; text-decoration: underline; }
-    .manual-section { display: none; margin-top: 16px; border-top: 1px solid #eee; padding-top: 16px; }
-    .manual-section.visible { display: block; }
-    .save-manual-btn { width: 100%; background: var(--dark); color: white; border: none; padding: 11px; border-radius: 6px; font-size: 14px; font-weight: 700; cursor: pointer; margin-top: 4px; }
-    .save-manual-btn:hover { filter: brightness(1.2); }
-
-    .fetch-preview { display: none; border: 1px solid #e0e0e0; border-radius: 10px; padding: 14px; margin-top: 16px; background: #fafafa; }
-    .fetch-preview.visible { display: flex; gap: 12px; align-items: flex-start; }
-    .fetch-preview img { width: 70px; height: 70px; object-fit: contain; border-radius: 6px; background: white; border: 1px solid #ddd; flex-shrink: 0; }
-    .fetch-preview-title { font-size: 13px; font-weight: 700; line-height: 1.4; margin-bottom: 4px; }
-    .fetch-preview-price { font-size: 16px; color: var(--highlight); font-weight: 700; }
-    .confirm-btn { margin-top: 12px; width: 100%; background: #007600; color: white; border: none; padding: 11px; border-radius: 6px; font-size: 14px; font-weight: 700; cursor: pointer; }
-    .confirm-btn:hover { background: #005a00; }
-
-    /* ── Rank Picker Modal ── */
-    .picker-modal { background: white; width: 100%; max-width: 480px; border-radius: 14px; padding: 24px; margin: auto; position: relative; }
-    .picker-modal h2  { font-size: 18px; margin-bottom: 6px; }
-    .picker-modal > p { font-size: 13px; color: #666; margin-bottom: 14px; }
-
-    /* ── Detail Modal ── */
-    .detail-modal { background: white; width: 100%; max-width: 860px; border-radius: 14px; padding: 0; margin: auto; overflow: hidden; position: relative; }
-    .detail-header { background: var(--dark); padding: 14px 20px; display: flex; align-items: center; justify-content: space-between; }
-    .detail-header-title { color: white; font-size: 15px; font-weight: 700; }
-    .detail-close { background: none; border: none; color: white; font-size: 22px; cursor: pointer; line-height: 1; }
-    .detail-body { display: grid; grid-template-columns: 1fr 1fr; max-height: 80vh; overflow-y: auto; }
-    .detail-img-panel { padding: 30px; background: #fff; display: flex; flex-direction: column; align-items: center; gap: 12px; border-right: 1px solid #eee; }
-    .detail-main-img { width: 100%; max-height: 340px; object-fit: contain; }
-    .detail-thumbnails { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; }
-    .detail-thumb { width: 52px; height: 52px; object-fit: contain; border: 2px solid #ddd; border-radius: 6px; cursor: pointer; padding: 2px; background: white; }
-    .detail-thumb:hover, .detail-thumb.active { border-color: var(--accent); }
-    .detail-info-panel { padding: 24px 24px 30px; overflow-y: auto; }
-    .detail-title { font-size: 18px; line-height: 1.4; font-weight: 400; margin-bottom: 10px; }
-    .detail-stars { color: var(--accent); font-size: 16px; margin-bottom: 12px; }
-    .detail-divider { border: none; border-top: 1px solid #e0e0e0; margin: 12px 0; }
-    .detail-price-big { font-size: 28px; color: var(--highlight); font-weight: 700; margin-bottom: 6px; }
-    .detail-prime-row { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; font-size: 13px; }
-    .detail-prime-badge { background: #00A8E0; color: white; font-size: 11px; font-weight: 900; padding: 2px 6px; border-radius: 2px; }
-    .detail-free-delivery { color: #007600; font-size: 13px; }
-    .detail-stock { color: #007600; font-size: 14px; font-weight: 700; margin-bottom: 14px; }
-    .detail-buy-btn { width: 100%; background: var(--accent); border: none; padding: 12px; border-radius: 20px; font-size: 14px; font-weight: 700; cursor: pointer; margin-bottom: 8px; }
-    .detail-buy-btn:hover { filter: brightness(0.9); }
-    .detail-buy-now-btn { width: 100%; background: color-mix(in srgb, var(--accent) 80%, orange 20%); border: none; padding: 12px; border-radius: 20px; font-size: 14px; font-weight: 700; cursor: pointer; margin-bottom: 14px; }
-    .detail-buy-now-btn:hover { filter: brightness(0.9); }
-    .detail-features { margin-top: 8px; }
-    .detail-features h4 { font-size: 14px; font-weight: 700; margin-bottom: 8px; }
-    .detail-features ul { list-style: disc; padding-left: 20px; font-size: 14px; line-height: 1.7; color: #333; }
-    .detail-description { font-size: 14px; line-height: 1.7; color: #333; margin-top: 8px; }
-    .detail-remove-btn { width: 100%; background: none; border: 1px solid #ccc; padding: 9px; border-radius: 6px; font-size: 13px; cursor: pointer; color: #555; margin-top: 8px; }
-    .detail-remove-btn:hover { background: #f5f5f5; color: var(--highlight); border-color: var(--highlight); }
-    .detail-edit-btn { width: 100%; background: none; border: 1px solid var(--accent); color: #555; padding: 9px; border-radius: 6px; font-size: 13px; cursor: pointer; margin-top: 8px; font-weight: 600; }
-    .detail-edit-btn:hover { background: color-mix(in srgb, var(--accent) 10%, white); color: #131921; }
-
-    /* ── Edit Modal ── */
-    .edit-modal { background: white; width: 100%; max-width: 480px; border-radius: 14px; padding: 28px 24px; margin: auto; position: relative; }
-    .edit-modal h2 { font-size: 20px; margin-bottom: 18px; }
-    .edit-save-btn { width: 100%; background: var(--accent); border: none; padding: 12px; border-radius: 6px; font-size: 15px; font-weight: 700; cursor: pointer; margin-top: 4px; }
-    .edit-save-btn:hover { filter: brightness(0.9); }
-    .img-upload-btn { display: inline-block; background: #f0f0f0; border: 1px solid #ccc; color: #333; padding: 8px 14px; border-radius: 6px; font-size: 13px; font-weight: 600; cursor: pointer; }
-    .img-upload-btn:hover { background: #e4e4e4; }
-    .price-missing-note { background: #fff8e1; border: 1px solid #ffe082; border-radius: 6px; padding: 10px 12px; font-size: 13px; color: #7a5800; margin-bottom: 14px; }
-    .budget-banner { padding: 8px 12px; border-radius: 6px; font-size: 13px; font-weight: 700; margin-bottom: 10px; }
-    .budget-banner.within { background: #d9f0d9; color: #007600; }
-    .budget-banner.over { background: #fce4e4; color: var(--highlight); }
-
-    /* Spinner */
-    .spinner { display: inline-block; width: 16px; height: 16px; border: 3px solid #ccc; border-top-color: var(--accent); border-radius: 50%; animation: spin 0.7s linear infinite; vertical-align: middle; margin-right: 6px; }
-    @keyframes spin { to { transform: rotate(360deg); } }
-
-    /* ══════════════════════════════════════
-       RESPONSIVE
-    ══════════════════════════════════════ */
-    @media (max-width: 600px) {
-      .product-grid { grid-template-columns: repeat(2, 1fr); gap: 8px; padding: 8px 10px 20px; }
-      .product-img-wrap { height: 150px; }
-      .detail-body { grid-template-columns: 1fr; }
-      .detail-img-panel { border-right: none; border-bottom: 1px solid #eee; padding: 20px; }
-      .logo { font-size: 16px; }
-      .add-header-btn { padding: 7px 10px; font-size: 12px; }
-    }
-  </style>
+/* ── modal ── */
+.overlay {
+  position: fixed; inset: 0; z-index: 100; display: none;
+  background: rgba(0,0,0,0.45);
+  align-items: flex-end; justify-content: center;
+}
+.overlay.open { display: flex; }
+.modal {
+  background: var(--surface); width: 100%; max-width: 560px;
+  border-radius: 16px 16px 0 0; padding: 18px 16px calc(18px + env(safe-area-inset-bottom));
+  max-height: 88vh; overflow-y: auto;
+}
+@media (min-width: 600px) {
+  .overlay { align-items: center; }
+  .modal { border-radius: 16px; }
+}
+.modal h3 { font-size: 16px; font-weight: 800; margin-bottom: 4px; }
+.empty { text-align: center; color: var(--ink-muted); font-size: 13px; padding: 22px 10px; }
+.hidden { display: none !important; }
+</style>
 </head>
 <body>
 
-<!-- ══════════════════════════════════════
-     HEADER
-══════════════════════════════════════ -->
 <div class="header">
-  <div class="logo">Noelles Wants</div>
-  <div class="header-search" id="headerSearch">
-    <input type="text" id="searchInput" placeholder="Search your wishlist..." oninput="renderProducts()">
-    <button class="search-btn">🔍</button>
+  <div>
+    <h1>Ad Budget Optimizer</h1>
+    <div class="sub" id="headerSub"></div>
   </div>
-  <div class="header-right">
-    <button class="add-header-btn" id="addHeaderBtn" onclick="openAddModal()">+ Add Product</button>
+  <button class="btn sm" id="headerAddBtn">+ Lead</button>
+</div>
+
+<!-- ════════ DASHBOARD ════════ -->
+<div class="page active" id="page-dash">
+  <div id="weeklyNudge"></div>
+  <div class="pill-row" id="rangePills"></div>
+  <div class="kpi-grid" id="kpiGrid"></div>
+
+  <div class="card" style="margin-top:12px;">
+    <h2>ROAS by source</h2>
+    <div class="bars" id="roasBars"></div>
+    <div class="axis-note">Revenue returned per $1 of ad spend · recurring jobs counted at first-year value</div>
+  </div>
+
+  <div class="card">
+    <h2>Leads by source</h2>
+    <div class="bars" id="leadBars"></div>
+  </div>
+
+  <div class="card">
+    <h2>Source breakdown</h2>
+    <div class="tbl-wrap"><table id="srcTable"></table></div>
   </div>
 </div>
 
-<!-- ══════════════════════════════════════
-     NAVBAR TABS
-══════════════════════════════════════ -->
-<div class="navbar">
-  <a class="nav-tab active" onclick="showPage('products')">🛍 Products</a>
-  <a class="nav-tab" onclick="showPage('top10')">🏆 Top 10</a>
-  <a class="nav-tab" onclick="showPage('settings')">⚙ Settings</a>
+<!-- ════════ LEADS ════════ -->
+<div class="page" id="page-leads">
+  <button class="btn" id="addLeadBtn">+ Add lead</button>
+  <div class="pill-row" style="margin-top:12px;" id="leadFilterPills"></div>
+  <div class="card"><div id="leadList"></div></div>
 </div>
 
-<!-- ══════════════════════════════════════
-     MAIN CONTENT
-══════════════════════════════════════ -->
-<div id="mainContent">
-
-  <!-- ─── PRODUCTS PAGE ─── -->
-  <div id="page-products" class="page">
-    <div class="white-box budget-box">
-      <span class="budget-label">💰 Budget:</span>
-      <div class="budget-input-wrap">
-        <span class="budget-dollar">$</span>
-        <input type="number" id="budgetInput" placeholder="0.00" min="0" step="0.01" oninput="renderProducts()">
-      </div>
-      <span class="budget-badge" id="budgetBadge" style="display:none"></span>
-      <button class="budget-clear" id="budgetClear" style="display:none" onclick="clearBudget()">✕ Clear</button>
+<!-- ════════ SPEND ════════ -->
+<div class="page" id="page-spend">
+  <div class="card">
+    <h2>Log spend</h2>
+    <div class="muted" style="margin-bottom:4px;">Enter what a platform has spent — daily, or whenever you check it.</div>
+    <label class="f">Source</label>
+    <select id="spSource"></select>
+    <div class="f2">
+      <div><label class="f">Amount ($)</label><input type="number" id="spAmount" inputmode="decimal" min="0" step="0.01" placeholder="0.00"></div>
+      <div><label class="f">Date</label><input type="date" id="spDate"></div>
     </div>
-
-    <div class="white-box results-box" id="resultsBar" style="display:none"></div>
-
-    <div class="product-grid" id="productGrid"></div>
-
-    <div class="white-box empty-state" id="emptyState" style="display:none">
-      <div class="empty-icon">🛍️</div>
-      <h2>Your wishlist is empty</h2>
-      <p>Paste a product link from any website to add items.</p>
-      <button class="empty-add-btn" onclick="openAddModal()">+ Add Your First Product</button>
-    </div>
+    <label class="f">Note (optional)</label>
+    <input type="text" id="spNote" placeholder="e.g. LSA weekly charge">
+    <div style="margin-top:12px;"><button class="btn" id="addSpendBtn">Save spend</button></div>
   </div>
-
-  <!-- ─── TOP 10 PAGE ─── -->
-  <div id="page-top10" class="page" style="display:none">
-    <div class="white-box top10-header">
-      <h2>🏆 My Top 10</h2>
-      <p>Drag items to reorder. #1 is your most wanted.</p>
-    </div>
-    <div class="ranking-list">
-      <div id="rankingContainer"></div>
-    </div>
-  </div>
-
-  <!-- ─── SETTINGS PAGE ─── -->
-  <div id="page-settings" class="page" style="display:none">
-    <div class="white-box settings-section">
-      <h2>⚙ Settings</h2>
-
-      <!-- THEME COLORS -->
-      <h3>🎨 Theme Colors</h3>
-      <p>Pick 3 colors to customise the look of your app.</p>
-      <div class="theme-row">
-        <div class="theme-swatch">
-          <div class="color-picker-wrap" id="swatch1">
-            <input type="color" id="colorAccent" value="#FF9900" oninput="onColorChange()">
-          </div>
-          <label for="colorAccent">Buttons &amp; Accents</label>
-        </div>
-        <div class="theme-swatch">
-          <div class="color-picker-wrap" id="swatch2">
-            <input type="color" id="colorDark" value="#131921" oninput="onColorChange()">
-          </div>
-          <label for="colorDark">Header &amp; Nav</label>
-        </div>
-        <div class="theme-swatch">
-          <div class="color-picker-wrap" id="colorHighlightWrap">
-            <input type="color" id="colorHighlight" value="#B12704" oninput="onColorChange()">
-          </div>
-          <label for="colorHighlight">Prices &amp; Highlights</label>
-        </div>
-      </div>
-      <button class="theme-reset-btn" onclick="resetTheme()">↺ Reset to Default Colors</button>
-
-      <hr class="settings-divider">
-
-      <!-- BACKGROUND -->
-      <h3>🖼 App Background</h3>
-      <p>Choose a photo to use as the background behind your products.</p>
-      <label class="bg-upload-btn" for="bgFileInput">📷 Choose Photo</label>
-      <input type="file" id="bgFileInput" accept="image/*" onchange="handleBgUpload(event)">
-      <div id="bgPreviewWrap" style="display:none">
-        <div class="bg-preview-wrap">
-          <img id="bgPreviewImg" src="" alt="Background preview">
-        </div>
-        <button class="bg-remove-btn" onclick="removeBg()">✕ Remove Background</button>
-      </div>
-
-      <hr class="settings-divider">
-
-      <!-- DANGER ZONE -->
-      <h3>🗑 Clear All Data</h3>
-      <p>Remove all products and rankings from the app. This cannot be undone.</p>
-      <button class="danger-btn" onclick="clearAllData()">Clear All Data</button>
-    </div>
-  </div>
-
-</div><!-- end #mainContent -->
-
-
-<!-- ═══════════════════════════════════════════
-     ADD PRODUCT MODAL
-═══════════════════════════════════════════ -->
-<div class="modal-overlay" id="addModal">
-  <div class="add-modal">
-    <button class="modal-close" onclick="closeAddModal()">✕</button>
-    <h2>Add a Product</h2>
-    <p>Paste a product URL from Amazon, Target, Walmart, or any other website.</p>
-
-    <div class="input-group">
-      <label for="amazonUrlInput">Product URL</label>
-      <input type="url" id="amazonUrlInput" placeholder="https://www.amazon.com/dp/..." autocomplete="off" spellcheck="false">
-    </div>
-
-    <button class="fetch-btn" id="fetchBtn" onclick="fetchProduct()">🔍 Fetch Product Info</button>
-    <div class="fetch-status" id="fetchStatus"></div>
-
-    <div class="fetch-preview" id="fetchPreview">
-      <img id="previewImg" src="" alt="preview">
-      <div class="fetch-preview-info">
-        <div class="fetch-preview-title" id="previewTitle"></div>
-        <div class="fetch-preview-price" id="previewPrice"></div>
-      </div>
-    </div>
-    <button class="confirm-btn" id="confirmBtn" style="display:none" onclick="confirmAddProduct()">✓ Add to Wishlist</button>
-
-    <div class="manual-link" onclick="toggleManual()">Enter details manually instead ↓</div>
-
-    <div class="manual-section" id="manualSection">
-      <div class="input-group">
-        <label>Product Title *</label>
-        <input type="text" id="manualTitle" placeholder="e.g. Apple AirPods Pro">
-      </div>
-      <div class="input-group">
-        <label>Price (e.g. 249.99)</label>
-        <input type="number" id="manualPrice" placeholder="249.99" min="0" step="0.01">
-      </div>
-      <div class="input-group">
-        <label>Image URL</label>
-        <input type="url" id="manualImage" placeholder="https://...">
-      </div>
-      <div class="input-group">
-        <label>Product URL *</label>
-        <input type="url" id="manualUrl" placeholder="https://...">
-      </div>
-      <div class="input-group">
-        <label>Description (optional)</label>
-        <textarea id="manualDesc" placeholder="Short product description..."></textarea>
-      </div>
-      <button class="save-manual-btn" onclick="saveManual()">💾 Save Product</button>
-    </div>
+  <div class="card">
+    <h2>Recent entries</h2>
+    <div id="spendList"></div>
   </div>
 </div>
 
-
-<!-- ═══════════════════════════════════════════
-     RANK PICKER MODAL
-═══════════════════════════════════════════ -->
-<div class="modal-overlay" id="pickerModal">
-  <div class="picker-modal">
-    <button class="modal-close" onclick="closePickerModal()">✕</button>
-    <h2>Add to Top 10</h2>
-    <p>Tap a product to add it to your ranking.</p>
-    <div class="picker-grid" id="pickerGrid"></div>
+<!-- ════════ OPTIMIZER ════════ -->
+<div class="page" id="page-opt">
+  <div class="card">
+    <h2>Current allocation</h2>
+    <div id="allocNow"></div>
+  </div>
+  <button class="btn" id="runOptBtn">⚡ Run weekly analysis</button>
+  <div id="optResult" style="margin-top:12px;"></div>
+  <div class="card" style="margin-top:12px;">
+    <h2>Past recommendations</h2>
+    <div id="recHistory"></div>
   </div>
 </div>
 
-
-<!-- ═══════════════════════════════════════════
-     PRODUCT DETAIL MODAL
-═══════════════════════════════════════════ -->
-<div class="modal-overlay" id="detailModal">
-  <div class="detail-modal">
-    <div class="detail-header">
-      <span class="detail-header-title">Product Details</span>
-      <button class="detail-close" onclick="closeDetailModal()">✕</button>
-    </div>
-    <div class="detail-body" id="detailBody"></div>
+<!-- ════════ SETTINGS ════════ -->
+<div class="page" id="page-set">
+  <div class="card">
+    <h2>Ad sources</h2>
+    <div id="sourceList"></div>
+    <div style="margin-top:10px;"><button class="btn secondary" id="addSourceBtn">+ Add source</button></div>
   </div>
-</div>
-
-
-<!-- ═══════════════════════════════════════════
-     EDIT PRODUCT MODAL
-═══════════════════════════════════════════ -->
-<div class="modal-overlay" id="editModal">
-  <div class="edit-modal">
-    <button class="modal-close" onclick="closeEditModal()">✕</button>
-    <h2>✏️ Edit Product</h2>
-    <input type="hidden" id="editId">
-    <div class="input-group">
-      <label>Product Title</label>
-      <input type="text" id="editTitle" placeholder="Product name">
-    </div>
-    <div class="input-group">
-      <label>Price (e.g. 49.99)</label>
-      <input type="number" id="editPrice" placeholder="0.00" min="0" step="0.01">
-    </div>
-    <div class="input-group">
-      <label>Image URL <span style="font-weight:400;color:#888">— or upload a photo below</span></label>
-      <input type="url" id="editImage" placeholder="https://..." oninput="editImageUrlChanged()">
-    </div>
-    <div class="input-group">
-      <label for="editImageFile" class="img-upload-btn" id="editImageUploadBtn">📷 Upload Photo</label>
-      <input type="file" id="editImageFile" accept="image/*" onchange="handleEditImageUpload(event)" style="display:none">
-      <div id="editImagePreview" style="display:none;margin-top:10px;border-radius:8px;overflow:hidden;border:1px solid #ddd;max-height:180px;text-align:center;background:#f5f5f5">
-        <img id="editImagePreviewImg" style="max-width:100%;max-height:180px;object-fit:contain;display:block;margin:0 auto">
-        <button onclick="clearEditImage()" style="width:100%;background:none;border:none;border-top:1px solid #ddd;padding:8px;font-size:12px;color:#B12704;cursor:pointer">✕ Remove photo</button>
+  <div class="card">
+    <h2>Optimizer settings</h2>
+    <label class="f">Lookback window (days of data the optimizer weighs)</label>
+    <select id="setLookback">
+      <option value="14">14 days</option>
+      <option value="30">30 days</option>
+      <option value="60">60 days</option>
+      <option value="90">90 days</option>
+    </select>
+    <div class="f2">
+      <div>
+        <label class="f">Minimum $/day per source</label>
+        <input type="number" id="setFloor" inputmode="decimal" min="0" step="1">
+      </div>
+      <div>
+        <label class="f">Max shift per week (%)</label>
+        <input type="number" id="setMaxShift" inputmode="numeric" min="5" max="100" step="5">
       </div>
     </div>
-    <div class="input-group">
-      <label>Product URL</label>
-      <input type="url" id="editUrl" placeholder="https://...">
+    <div class="muted" style="margin-top:8px;">The floor keeps every source alive with test budget so you never go blind on a channel. The max shift stops whiplash from one lucky week.</div>
+    <div style="margin-top:12px;"><button class="btn secondary" id="saveSettingsBtn">Save settings</button></div>
+  </div>
+  <div class="card">
+    <h2>Backup</h2>
+    <div class="btn-row">
+      <button class="btn secondary" id="exportBtn">Export data</button>
+      <button class="btn secondary" id="importBtn">Import data</button>
     </div>
-    <div class="input-group">
-      <label>Description (optional)</label>
-      <textarea id="editDesc" placeholder="Short description..."></textarea>
-    </div>
-    <button class="edit-save-btn" onclick="saveEdit()">💾 Save Changes</button>
+    <input type="file" id="importFile" accept=".json" class="hidden">
+    <div class="muted" style="margin-top:8px;">Data lives in this browser only. Export a backup now and then, or to move to another device.</div>
+    <div style="margin-top:10px;"><button class="btn danger" id="resetBtn">Erase all data</button></div>
   </div>
 </div>
 
+<!-- ── bottom nav ── -->
+<div class="nav" id="nav">
+  <button data-page="dash" class="on"><span class="ic">📊</span>Dashboard</button>
+  <button data-page="leads"><span class="ic">👤</span>Leads</button>
+  <button data-page="spend"><span class="ic">💵</span>Spend</button>
+  <button data-page="opt"><span class="ic">🎯</span>Optimizer</button>
+  <button data-page="set"><span class="ic">⚙️</span>Settings</button>
+</div>
 
-<!-- ═══════════════════════════════════════════
-     SCRIPT
-═══════════════════════════════════════════ -->
+<!-- ── modals ── -->
+<div class="overlay" id="overlay">
+  <div class="modal" id="modalBox"></div>
+</div>
+<div id="tip"></div>
+
 <script>
-/* ════════════════════════════════════════
-   DATA
-════════════════════════════════════════ */
-// HTML proxy list (fallback) — each returns raw HTML text
-const HTML_PROXIES = [
-  {
-    build:   url => `https://corsproxy.io/?${encodeURIComponent(url)}`,
-    extract: async res => res.text()
-  },
-  {
-    build:   url => `https://api.allorigins.win/get?url=${encodeURIComponent(url)}`,
-    extract: async res => { const d = await res.json(); return d.contents || ''; }
-  },
-  {
-    build:   url => `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`,
-    extract: async res => res.text()
-  },
-  {
-    build:   url => `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(url)}`,
-    extract: async res => res.text()
-  },
-];
+'use strict';
+/* ═══════════════════════ state ═══════════════════════ */
+const LS_KEY = 'adBudgetOptimizer.v1';
+const CHIP_COLORS = 8; // fixed categorical order, chip-1..chip-8, never cycled past 8
 
-// Fetch with timeout helper
-async function timedFetch(url, ms = 12000) {
-  const ctrl = new AbortController();
-  const tid  = setTimeout(() => ctrl.abort(), ms);
-  try {
-    const res = await fetch(url, { signal: ctrl.signal });
-    clearTimeout(tid);
-    return res;
-  } catch(e) { clearTimeout(tid); throw e; }
-}
+const FREQ = {
+  onetime:   { label: 'One-time',    mult: 1  },
+  weekly:    { label: 'Weekly',      mult: 52 },
+  biweekly:  { label: 'Every 2 wks', mult: 26 },
+  monthly:   { label: 'Monthly',     mult: 12 },
+  quarterly: { label: 'Quarterly',   mult: 4  },
+  yearly:    { label: 'Yearly',      mult: 1  },
+};
+const STATUSES = ['new','contacted','quoted','won','lost'];
+const STATUS_LABEL = { new:'New', contacted:'Contacted', quoted:'Quoted', won:'Won ✓', lost:'Lost' };
 
-// Primary: microlink.io — a free metadata API that works on most sites
-async function fetchViaMicrolink(url) {
-  const res = await timedFetch(`https://api.microlink.io/?url=${encodeURIComponent(url)}&palette=false&audio=false&video=false&iframe=false`, 12000);
-  if (!res.ok) return null;
-  const d = await res.json();
-  if (d.status !== 'success') return null;
-  const data = d.data;
+let state = load();
+
+function defaults() {
+  const now = new Date().toISOString();
   return {
-    title:       data.title       || '',
-    description: data.description || '',
-    image:       data.image?.url  || data.logo?.url || '',
+    sources: [
+      { id: uid(), name: 'Google LSA', dailyBudget: 10, archived: false, createdAt: now },
+      { id: uid(), name: 'Meta Ads',   dailyBudget: 10, archived: false, createdAt: now },
+      { id: uid(), name: 'TextBlast',  dailyBudget: 10, archived: false, createdAt: now },
+    ],
+    spend: [],   // {id, sourceId, date:'YYYY-MM-DD', amount, note}
+    leads: [],   // {id, sourceId, date, name, phone, notes, status, job:{freq, amount}|null, wonDate}
+    recs:  [],   // {id, date, lookback, applied, rows:[{name,cur,rec}], note}
+    settings: { lookbackDays: 30, minFloor: 5, maxShiftPct: 25, lastRunAt: null },
   };
 }
+function load() {
+  try {
+    const raw = localStorage.getItem(LS_KEY);
+    if (raw) { const d = JSON.parse(raw); if (d && d.sources) return d; }
+  } catch (e) {}
+  return defaults();
+}
+function save() { localStorage.setItem(LS_KEY, JSON.stringify(state)); }
+function uid() { return Math.random().toString(36).slice(2, 10) + Date.now().toString(36); }
 
-// Fallback: raw HTML through CORS proxies
-async function fetchViaProxy(url) {
-  for (const proxy of HTML_PROXIES) {
-    try {
-      const res = await timedFetch(proxy.build(url), 14000);
-      if (!res.ok) continue;
-      const html = await proxy.extract(res);
-      if (html && html.length > 300) return html;
-    } catch(e) {
-      console.warn('HTML proxy failed:', e.message);
-    }
+/* ═══════════════════════ helpers ═══════════════════════ */
+const $ = id => document.getElementById(id);
+function todayStr() { const d = new Date(); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
+function fmt$(n, dec) { if (n == null || isNaN(n)) return '—'; const d = dec == null ? (Math.abs(n) >= 1000 ? 0 : (Number.isInteger(n) ? 0 : 2)) : dec; return '$' + Number(n).toLocaleString(undefined, { minimumFractionDigits: d, maximumFractionDigits: d }); }
+function fmtX(n) { return (n == null || isNaN(n)) ? '—' : n.toFixed(1) + 'x'; }
+function fmtPct(n) { return (n == null || isNaN(n)) ? '—' : Math.round(n * 100) + '%'; }
+function fmtDate(s) { if (!s) return ''; const [y,m,d] = s.split('-').map(Number); return new Date(y, m-1, d).toLocaleDateString(undefined, { month:'short', day:'numeric' }); }
+function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function daysAgoStr(n) { const d = new Date(); d.setDate(d.getDate() - n); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
+
+function sourceById(id) { return state.sources.find(s => s.id === id); }
+function activeSources() { return state.sources.filter(s => !s.archived); }
+function sourceColor(src) {
+  const i = state.sources.indexOf(src);
+  return 'var(--chip-' + ((i % CHIP_COLORS) + 1) + ')';
+}
+function jobAnnualValue(job) {
+  if (!job || !job.amount) return 0;
+  const f = FREQ[job.freq] || FREQ.onetime;
+  return job.amount * f.mult;
+}
+
+/* stats for one source over a window [since, until] inclusive (date strings) */
+function statsFor(sourceId, since, until) {
+  let spend = 0, leads = 0, won = 0, revenue = 0;
+  for (const e of state.spend) {
+    if (e.sourceId !== sourceId) continue;
+    if (since && e.date < since) continue;
+    if (until && e.date > until) continue;
+    spend += e.amount;
   }
-  return null;
-}
-
-let products = [];
-let ranking  = [];
-let settings = { backgroundImage: null, accent: '#FF9900', dark: '#131921', highlight: '#B12704' };
-
-try { products = JSON.parse(localStorage.getItem('wl_products') || '[]'); } catch(e) {}
-try { ranking  = JSON.parse(localStorage.getItem('wl_ranking')  || '[]'); } catch(e) {}
-try { const s  = JSON.parse(localStorage.getItem('wl_settings') || '{}'); settings = Object.assign(settings, s); } catch(e) {}
-
-function save()         { localStorage.setItem('wl_products', JSON.stringify(products)); }
-function saveRanking()  { localStorage.setItem('wl_ranking',  JSON.stringify(ranking)); }
-function saveSettings() { localStorage.setItem('wl_settings', JSON.stringify(settings)); }
-
-let pendingProduct  = null;
-let rankingSortable = null;
-
-/* ════════════════════════════════════════
-   THEME
-════════════════════════════════════════ */
-// applyTheme always reads from settings — never from DOM inputs
-function applyTheme() {
-  const a = settings.accent    || '#FF9900';
-  const d = settings.dark      || '#131921';
-  const h = settings.highlight || '#B12704';
-  document.documentElement.style.setProperty('--accent',    a);
-  document.documentElement.style.setProperty('--dark',      d);
-  document.documentElement.style.setProperty('--highlight', h);
-  // Update swatch backgrounds if settings page is open
-  const s1 = document.getElementById('swatch1');
-  const s2 = document.getElementById('swatch2');
-  const s3 = document.getElementById('colorHighlightWrap');
-  if (s1) s1.style.background = a;
-  if (s2) s2.style.background = d;
-  if (s3) s3.style.background = h;
-}
-
-// Called by oninput on each color picker — saves picker value into settings then applies
-function onColorChange() {
-  const ca = document.getElementById('colorAccent');
-  const cd = document.getElementById('colorDark');
-  const ch = document.getElementById('colorHighlight');
-  if (ca) settings.accent    = ca.value;
-  if (cd) settings.dark      = cd.value;
-  if (ch) settings.highlight = ch.value;
-  saveSettings();
-  applyTheme();
-}
-
-function resetTheme() {
-  settings.accent    = '#FF9900';
-  settings.dark      = '#131921';
-  settings.highlight = '#B12704';
-  saveSettings();
-  initColorPickers(); // syncs pickers to settings then applies
-}
-
-function initColorPickers() {
-  const ca = document.getElementById('colorAccent');
-  const cd = document.getElementById('colorDark');
-  const ch = document.getElementById('colorHighlight');
-  if (ca) ca.value = settings.accent    || '#FF9900';
-  if (cd) cd.value = settings.dark      || '#131921';
-  if (ch) ch.value = settings.highlight || '#B12704';
-  applyTheme(); // apply swatches too
-}
-
-/* ════════════════════════════════════════
-   BACKGROUND
-════════════════════════════════════════ */
-function applyBackground() {
-  const mc = document.getElementById('mainContent');
-  if (settings.backgroundImage) {
-    mc.style.backgroundImage    = `url(${settings.backgroundImage})`;
-    mc.style.backgroundSize     = 'cover';
-    mc.style.backgroundPosition = 'center';
-    mc.style.backgroundAttachment = 'fixed';
-  } else {
-    mc.style.backgroundImage = '';
-    mc.style.background      = '#EAEDED';
+  for (const l of state.leads) {
+    if (l.sourceId !== sourceId) continue;
+    if (since && l.date < since) continue;
+    if (until && l.date > until) continue;
+    leads++;
+    if (l.status === 'won') { won++; revenue += jobAnnualValue(l.job); }
   }
+  return {
+    spend, leads, won, revenue,
+    roas: spend > 0 ? revenue / spend : null,
+    cpl:  leads > 0 ? spend / leads : null,
+    close: leads > 0 ? won / leads : null,
+  };
+}
+function totals(since, until) {
+  const t = { spend:0, leads:0, won:0, revenue:0 };
+  for (const s of activeSources()) {
+    const st = statsFor(s.id, since, until);
+    t.spend += st.spend; t.leads += st.leads; t.won += st.won; t.revenue += st.revenue;
+  }
+  t.roas = t.spend > 0 ? t.revenue / t.spend : null;
+  t.cpl  = t.leads > 0 ? t.spend / t.leads : null;
+  t.close = t.leads > 0 ? t.won / t.leads : null;
+  return t;
 }
 
-function handleBgUpload(e) {
-  const file = e.target.files[0];
-  if (!file) return;
-  const reader = new FileReader();
-  reader.onload = function(ev) {
-    const img = new Image();
-    img.onload = function() {
-      const canvas = document.createElement('canvas');
-      const MAX = 1920;
-      let w = img.width, h = img.height;
-      if (w > MAX || h > MAX) {
-        if (w > h) { h = Math.round(h * MAX / w); w = MAX; }
-        else        { w = Math.round(w * MAX / h); h = MAX; }
+/* ═══════════════════════ navigation ═══════════════════════ */
+let currentPage = 'dash';
+$('nav').addEventListener('click', e => {
+  const btn = e.target.closest('button'); if (!btn) return;
+  currentPage = btn.dataset.page;
+  document.querySelectorAll('.nav button').forEach(b => b.classList.toggle('on', b === btn));
+  document.querySelectorAll('.page').forEach(p => p.classList.toggle('active', p.id === 'page-' + currentPage));
+  renderAll();
+});
+
+/* ═══════════════════════ dashboard ═══════════════════════ */
+const RANGES = [ {k:'7', label:'7D', days:7}, {k:'30', label:'30D', days:30}, {k:'90', label:'90D', days:90}, {k:'all', label:'All', days:null} ];
+let rangeKey = '30';
+
+function renderRangePills() {
+  $('rangePills').innerHTML = RANGES.map(r =>
+    `<button class="pill ${r.k===rangeKey?'on':''}" data-r="${r.k}">${r.label}</button>`).join('');
+}
+$('rangePills').addEventListener('click', e => {
+  const b = e.target.closest('.pill'); if (!b) return;
+  rangeKey = b.dataset.r; renderDash();
+});
+
+function renderDash() {
+  renderRangePills();
+  const r = RANGES.find(x => x.k === rangeKey);
+  const since = r.days ? daysAgoStr(r.days - 1) : null;
+  const t = totals(since, null);
+
+  // previous equal-length window for deltas
+  let prev = null;
+  if (r.days) prev = totals(daysAgoStr(r.days * 2 - 1), daysAgoStr(r.days));
+
+  const kpis = [
+    { lbl: 'Spend',       val: fmt$(t.spend),   cur: t.spend,   prev: prev && prev.spend,   goodUp: false },
+    { lbl: 'Revenue',     val: fmt$(t.revenue), cur: t.revenue, prev: prev && prev.revenue, goodUp: true },
+    { lbl: 'ROAS',        val: fmtX(t.roas),    cur: t.roas,    prev: prev && prev.roas,    goodUp: true },
+    { lbl: 'Leads',       val: String(t.leads), cur: t.leads,   prev: prev && prev.leads,   goodUp: true },
+    { lbl: 'Cost / lead', val: fmt$(t.cpl),     cur: t.cpl,     prev: prev && prev.cpl,     goodUp: false },
+    { lbl: 'Close rate',  val: fmtPct(t.close), cur: t.close,   prev: prev && prev.close,   goodUp: true },
+  ];
+  $('kpiGrid').innerHTML = kpis.map(k => {
+    let delta = '';
+    if (prev && k.prev != null && k.cur != null && k.prev !== 0 && !isNaN(k.prev) && !isNaN(k.cur)) {
+      const pct = (k.cur - k.prev) / Math.abs(k.prev);
+      if (Math.abs(pct) < 0.005) delta = `<div class="delta flat">— vs prior</div>`;
+      else {
+        const up = pct > 0;
+        const good = up === k.goodUp;
+        delta = `<div class="delta ${good?'up':'down'}">${up?'▲':'▼'} ${Math.abs(Math.round(pct*100))}% vs prior ${r.days}d</div>`;
       }
-      canvas.width = w; canvas.height = h;
-      canvas.getContext('2d').drawImage(img, 0, 0, w, h);
-      settings.backgroundImage = canvas.toDataURL('image/jpeg', 0.75);
-      saveSettings();
-      applyBackground();
-      renderSettings();
-    };
-    img.src = ev.target.result;
-  };
-  reader.readAsDataURL(file);
-  e.target.value = '';
+    }
+    return `<div class="kpi"><div class="lbl">${k.lbl}</div><div class="val">${k.val}</div>${delta}</div>`;
+  }).join('');
+
+  // per-source rows
+  const rows = activeSources().map(s => ({ src: s, st: statsFor(s.id, since, null) }));
+
+  renderBarChart('roasBars', rows, x => x.st.roas, v => fmtX(v),
+    x => `<div class="t-head">${esc(x.src.name)}</div>
+          <div class="t-line">Spend ${fmt$(x.st.spend)} → revenue ${fmt$(x.st.revenue)}</div>
+          <div class="t-line">${x.st.won} job${x.st.won===1?'':'s'} won from ${x.st.leads} lead${x.st.leads===1?'':'s'}</div>`,
+    'No revenue data yet — mark leads as Won with a job price to see ROAS.');
+
+  renderBarChart('leadBars', rows, x => x.st.leads, v => String(v),
+    x => `<div class="t-head">${esc(x.src.name)}</div>
+          <div class="t-line">${x.st.leads} leads · cost/lead ${fmt$(x.st.cpl)}</div>
+          <div class="t-line">Close rate ${fmtPct(x.st.close)}</div>`,
+    'No leads logged in this window yet.');
+
+  // table
+  let html = `<tr><th>Source</th><th>Spend</th><th>Leads</th><th>CPL</th><th>Won</th><th>Revenue</th><th>ROAS</th></tr>`;
+  for (const { src, st } of rows) {
+    html += `<tr><td class="src">${esc(src.name)}</td><td>${fmt$(st.spend)}</td><td>${st.leads}</td><td>${fmt$(st.cpl)}</td><td>${st.won}</td><td>${fmt$(st.revenue)}</td><td>${fmtX(st.roas)}</td></tr>`;
+  }
+  html += `<tr><td class="src">Total</td><td><b>${fmt$(t.spend)}</b></td><td><b>${t.leads}</b></td><td><b>${fmt$(t.cpl)}</b></td><td><b>${t.won}</b></td><td><b>${fmt$(t.revenue)}</b></td><td><b>${fmtX(t.roas)}</b></td></tr>`;
+  $('srcTable').innerHTML = html;
+
+  // weekly nudge
+  const last = state.settings.lastRunAt;
+  const daysSince = last ? Math.floor((Date.now() - new Date(last).getTime()) / 86400000) : null;
+  $('weeklyNudge').innerHTML = (last == null || daysSince >= 7)
+    ? `<div class="banner">🎯 ${last == null ? 'You haven’t run the optimizer yet.' : `It’s been ${daysSince} days since your last budget review.`} <b>Run the weekly analysis</b> in the Optimizer tab to see where your money should move.</div>`
+    : '';
 }
 
-function removeBg() {
-  settings.backgroundImage = null;
-  saveSettings();
-  applyBackground();
+function renderBarChart(elId, rows, getVal, fmtVal, tipHtml, emptyMsg) {
+  const el = $(elId);
+  const vals = rows.map(r => getVal(r) || 0);
+  const max = Math.max(...vals, 0);
+  if (max <= 0 || rows.length === 0) { el.innerHTML = `<div class="empty">${emptyMsg}</div>`; return; }
+  el.innerHTML = rows.map((r, i) => {
+    const v = getVal(r) || 0;
+    const w = Math.max(2, (v / max) * 100);
+    return `<div class="bar-row">
+      <div class="name"><span class="dot" style="background:${sourceColor(r.src)}"></span>${esc(r.src.name)}</div>
+      <div class="bar-track" data-tip="${i}">
+        <div class="bar-fill" style="width:${w}%"></div>
+        <div class="bar-val">${fmtVal(getVal(r))}</div>
+      </div>
+    </div>`;
+  }).join('');
+  // hover / tap tooltips
+  el.querySelectorAll('.bar-track').forEach(track => {
+    const row = rows[Number(track.dataset.tip)];
+    const show = ev => {
+      const tip = $('tip');
+      tip.innerHTML = tipHtml(row);
+      tip.style.display = 'block';
+      const x = (ev.touches ? ev.touches[0].clientX : ev.clientX);
+      const y = (ev.touches ? ev.touches[0].clientY : ev.clientY);
+      const w = tip.offsetWidth;
+      tip.style.left = Math.min(Math.max(8, x - w / 2), window.innerWidth - w - 8) + 'px';
+      tip.style.top = Math.max(8, y - tip.offsetHeight - 14) + 'px';
+    };
+    const hide = () => { $('tip').style.display = 'none'; };
+    track.addEventListener('mousemove', show);
+    track.addEventListener('mouseleave', hide);
+    track.addEventListener('touchstart', ev => { show(ev); setTimeout(hide, 2200); }, { passive: true });
+  });
+}
+
+/* ═══════════════════════ leads ═══════════════════════ */
+let leadFilter = 'all';
+function renderLeadFilters() {
+  const opts = [['all','All'], ...STATUSES.map(s => [s, STATUS_LABEL[s].replace(' ✓','')])];
+  $('leadFilterPills').innerHTML = opts.map(([k, l]) =>
+    `<button class="pill ${leadFilter===k?'on':''}" data-f="${k}">${l}</button>`).join('');
+}
+$('leadFilterPills').addEventListener('click', e => {
+  const b = e.target.closest('.pill'); if (!b) return;
+  leadFilter = b.dataset.f; renderLeads();
+});
+
+function renderLeads() {
+  renderLeadFilters();
+  const list = state.leads
+    .filter(l => leadFilter === 'all' || l.status === leadFilter)
+    .slice().sort((a, b) => b.date.localeCompare(a.date) || b.id.localeCompare(a.id));
+  if (!list.length) { $('leadList').innerHTML = `<div class="empty">No leads here yet. Every call, text, or form-fill you get from an ad — log it, and pick which source it came from.</div>`; return; }
+  $('leadList').innerHTML = list.map(l => {
+    const src = sourceById(l.sourceId);
+    const job = l.status === 'won' && l.job
+      ? `<span class="tag" style="color:var(--good);border-color:var(--good)">${fmt$(jobAnnualValue(l.job))}${l.job.freq !== 'onetime' ? '/yr · ' + FREQ[l.job.freq].label.toLowerCase() : ''}</span>`
+      : '';
+    return `<div class="row">
+      <div class="grow" data-edit-lead="${l.id}" style="cursor:pointer;">
+        <div class="title">${esc(l.name || 'Lead')} ${job}</div>
+        <div class="meta">${fmtDate(l.date)} · <span class="dot" style="display:inline-block;background:${src?sourceColor(src):'var(--ink-muted)'};vertical-align:-1px;"></span> ${esc(src ? src.name : 'Unknown')}${l.notes ? ' · ' + esc(l.notes) : ''}</div>
+      </div>
+      <select class="status-sel st-${l.status}" data-status-lead="${l.id}">
+        ${STATUSES.map(s => `<option value="${s}" ${l.status===s?'selected':''}>${STATUS_LABEL[s]}</option>`).join('')}
+      </select>
+    </div>`;
+  }).join('');
+}
+$('leadList').addEventListener('change', e => {
+  const sel = e.target.closest('[data-status-lead]'); if (!sel) return;
+  const lead = state.leads.find(l => l.id === sel.dataset.statusLead); if (!lead) return;
+  const ns = sel.value;
+  if (ns === 'won') { openJobModal(lead); }
+  else { lead.status = ns; save(); renderAll(); }
+});
+$('leadList').addEventListener('click', e => {
+  if (e.target.closest('[data-status-lead]')) return;
+  const el = e.target.closest('[data-edit-lead]'); if (!el) return;
+  const lead = state.leads.find(l => l.id === el.dataset.editLead);
+  if (lead) openLeadModal(lead);
+});
+
+/* ═══════════════════════ spend ═══════════════════════ */
+function renderSpendForm() {
+  const sel = $('spSource');
+  const cur = sel.value;
+  sel.innerHTML = activeSources().map(s => `<option value="${s.id}">${esc(s.name)}</option>`).join('');
+  if (cur && activeSources().some(s => s.id === cur)) sel.value = cur;
+  if (!$('spDate').value) $('spDate').value = todayStr();
+}
+$('addSpendBtn').addEventListener('click', () => {
+  const amount = parseFloat($('spAmount').value);
+  const sourceId = $('spSource').value;
+  const date = $('spDate').value || todayStr();
+  if (!sourceId) { alert('Add an ad source first (Settings tab).'); return; }
+  if (!(amount > 0)) { alert('Enter the amount spent.'); return; }
+  state.spend.push({ id: uid(), sourceId, date, amount, note: $('spNote').value.trim() });
+  $('spAmount').value = ''; $('spNote').value = '';
+  save(); renderAll();
+});
+function renderSpendList() {
+  const list = state.spend.slice().sort((a, b) => b.date.localeCompare(a.date) || b.id.localeCompare(a.id)).slice(0, 60);
+  if (!list.length) { $('spendList').innerHTML = `<div class="empty">No spend logged yet. Check your ad dashboards and enter what each one has spent.</div>`; return; }
+  $('spendList').innerHTML = list.map(e => {
+    const src = sourceById(e.sourceId);
+    return `<div class="row">
+      <div class="grow">
+        <div class="title">${esc(src ? src.name : 'Unknown')}</div>
+        <div class="meta">${fmtDate(e.date)}${e.note ? ' · ' + esc(e.note) : ''}</div>
+      </div>
+      <div class="amt">${fmt$(e.amount, 2)}</div>
+      <button class="btn danger sm" data-del-spend="${e.id}">✕</button>
+    </div>`;
+  }).join('');
+}
+$('spendList').addEventListener('click', e => {
+  const b = e.target.closest('[data-del-spend]'); if (!b) return;
+  if (!confirm('Delete this spend entry?')) return;
+  state.spend = state.spend.filter(x => x.id !== b.dataset.delSpend);
+  save(); renderAll();
+});
+
+/* ═══════════════════════ optimizer ═══════════════════════ */
+function renderAllocation() {
+  const srcs = activeSources();
+  const total = srcs.reduce((a, s) => a + (s.dailyBudget || 0), 0);
+  if (!srcs.length) { $('allocNow').innerHTML = `<div class="empty">Add ad sources in Settings first.</div>`; return; }
+  $('allocNow').innerHTML = srcs.map(s => `
+    <div class="row">
+      <div class="grow"><div class="title"><span class="dot" style="display:inline-block;background:${sourceColor(s)};vertical-align:-1px;"></span> ${esc(s.name)}</div></div>
+      <div class="amt">${fmt$(s.dailyBudget)}/day</div>
+    </div>`).join('') +
+    `<div class="row"><div class="grow"><div class="title">Total</div></div><div class="amt">${fmt$(total)}/day · ≈${fmt$(total * 30.4, 0)}/mo</div></div>`;
+}
+
+function runOptimizer() {
+  const cfg = state.settings;
+  const lookback = cfg.lookbackDays;
+  const since = daysAgoStr(lookback - 1);
+  const srcs = activeSources();
+  if (srcs.length < 2) return { error: 'You need at least two active sources to reallocate between.' };
+
+  const rows = srcs.map(s => ({ src: s, st: statsFor(s.id, since, null), cur: s.dailyBudget || 0 }));
+  const totalBudget = rows.reduce((a, r) => a + r.cur, 0);
+  if (totalBudget <= 0) return { error: 'Set a daily budget on your sources (Settings tab) so there’s a total to divide.' };
+
+  const tot = { spend:0, leads:0, revenue:0 };
+  rows.forEach(r => { tot.spend += r.st.spend; tot.leads += r.st.leads; tot.revenue += r.st.revenue; });
+  if (tot.spend <= 0) return { error: `No spend logged in the last ${lookback} days. Log spend per source, then run the analysis.` };
+
+  const avgRoasPerDollar = tot.revenue / tot.spend;
+  const avgLeadsPerDollar = tot.leads / tot.spend;
+
+  // Score each source: blend its observed ROAS and lead-flow toward the account
+  // average based on how much evidence it has (few leads → little trust).
+  rows.forEach(r => {
+    const hasSpend = r.st.spend > 0;
+    const conf = r.st.leads / (r.st.leads + 4); // 0 = no trust, ~0.7 at 10 leads
+    const roasPD  = hasSpend ? r.st.revenue / r.st.spend : avgRoasPerDollar;
+    const leadsPD = hasSpend ? r.st.leads / r.st.spend : avgLeadsPerDollar;
+    r.blendRoas  = conf * roasPD  + (1 - conf) * avgRoasPerDollar;
+    r.blendLeads = conf * leadsPD + (1 - conf) * avgLeadsPerDollar;
+    r.hasSpend = hasSpend;
+  });
+  const maxR = Math.max(...rows.map(r => r.blendRoas), 0);
+  const maxL = Math.max(...rows.map(r => r.blendLeads), 0);
+  const useRevenue = tot.revenue > 0;
+  rows.forEach(r => {
+    const rs = maxR > 0 ? r.blendRoas / maxR : 0;
+    const ls = maxL > 0 ? r.blendLeads / maxL : 0;
+    // ROAS leads when revenue data exists; lead flow carries the whole score
+    // until jobs get logged, and breaks ties after.
+    r.score = useRevenue ? 0.65 * rs + 0.35 * ls : ls;
+    if (!r.hasSpend) r.score = 0; // never grow a channel with zero recorded spend
+  });
+
+  const floor = Math.min(cfg.minFloor || 0, totalBudget / rows.length);
+  const scoreSum = rows.reduce((a, r) => a + r.score, 0);
+
+  // ideal split ∝ score, everyone keeps the floor
+  rows.forEach(r => {
+    r.ideal = scoreSum > 0
+      ? floor + (totalBudget - floor * rows.length) * (r.score / scoreSum)
+      : r.cur;
+  });
+
+  // cap week-over-week movement so one lucky/unlucky week can't whiplash budgets
+  rows.forEach(r => {
+    const cap = Math.max(r.cur * (cfg.maxShiftPct / 100), 2);
+    r.rec = Math.min(Math.max(r.ideal, r.cur - cap), r.cur + cap);
+    r.rec = Math.max(r.rec, floor);
+  });
+
+  // re-balance to preserve the total, then round to whole dollars
+  let diff = totalBudget - rows.reduce((a, r) => a + r.rec, 0);
+  const order = rows.slice().sort((a, b) => diff > 0 ? b.score - a.score : a.score - b.score);
+  for (const r of order) {
+    if (Math.abs(diff) < 0.01) break;
+    const cap = Math.max(r.cur * (cfg.maxShiftPct / 100), 2);
+    const lo = Math.max(floor, r.cur - cap), hi = r.cur + cap;
+    const room = diff > 0 ? hi - r.rec : lo - r.rec;
+    const take = diff > 0 ? Math.min(diff, room) : Math.max(diff, room);
+    r.rec += take; diff -= take;
+  }
+  rows.forEach(r => { r.rec = Math.round(r.rec); });
+  const rdiff = totalBudget - rows.reduce((a, r) => a + r.rec, 0);
+  if (Math.abs(rdiff) >= 1) {
+    const tgt = rows.slice().sort((a, b) => b.score - a.score)[0];
+    tgt.rec += Math.round(rdiff);
+  }
+
+  // reasons
+  rows.forEach(r => {
+    const st = r.st, bits = [];
+    if (!r.hasSpend) bits.push(`No spend logged in the last ${lookback} days — log its spend to include it in the math.`);
+    else {
+      if (useRevenue && st.revenue > 0) bits.push(`Returned ${fmtX(st.roas)} — ${fmt$(st.revenue)} in revenue (first-year value) on ${fmt$(st.spend)} spent.`);
+      else if (useRevenue) bits.push(`${fmt$(st.spend)} spent with no jobs won yet.`);
+      if (st.leads > 0) bits.push(`${st.leads} lead${st.leads===1?'':'s'} at ${fmt$(st.cpl)} each${st.close != null ? `, closing ${fmtPct(st.close)}` : ''}.`);
+      else bits.push(`Zero leads from ${fmt$(st.spend)} spent — that’s the red flag here.`);
+      if (st.leads > 0 && st.leads < 5) bits.push(`Small sample (${st.leads} lead${st.leads===1?'':'s'}), so this is a measured move, not a big swing.`);
+    }
+    const d = r.rec - r.cur;
+    if (d > 0) bits.push(`→ Shift +${fmt$(d)}/day toward it.`);
+    else if (d < 0) bits.push(`→ Pull ${fmt$(-d)}/day away.`);
+    else bits.push(`→ Hold steady.`);
+    r.reason = bits.join(' ');
+  });
+
+  const winner = rows.slice().sort((a, b) => b.score - a.score)[0];
+  let note = useRevenue
+    ? `Best performer this window: ${winner.src.name}. Weighted 65% ROAS / 35% lead flow over the last ${lookback} days.`
+    : `No won jobs logged yet, so this is based purely on lead flow per dollar. Mark leads as Won with a price and ROAS takes over.`;
+  if (tot.leads < 5) note += ` Heads up: only ${tot.leads} total lead${tot.leads===1?'':'s'} in the window — treat this as directional until more data lands.`;
+
+  return { rows, note, lookback, totalBudget };
+}
+
+let lastRun = null;
+$('runOptBtn').addEventListener('click', () => {
+  const res = runOptimizer();
+  if (res.error) { $('optResult').innerHTML = `<div class="banner">${esc(res.error)}</div>`; return; }
+  lastRun = res;
+  const html = `
+    <div class="card">
+      <h2>This week’s recommendation</h2>
+      <div class="muted" style="margin-bottom:10px;">${esc(res.note)}</div>
+      ${res.rows.map(r => {
+        const d = r.rec - r.cur;
+        const cls = d > 0 ? 'up' : d < 0 ? 'down' : 'flat';
+        const arrow = d > 0 ? '▲ +' + fmt$(d) : d < 0 ? '▼ −' + fmt$(-d) : '— hold';
+        return `<div class="rec-card">
+          <div class="rec-head">
+            <div class="nm"><span class="dot" style="background:${sourceColor(r.src)}"></span>${esc(r.src.name)}</div>
+            <div class="rec-move ${cls}">${arrow}${d !== 0 ? '/day' : ''}</div>
+          </div>
+          <div class="rec-budget">${fmt$(r.cur)}/day → <b>${fmt$(r.rec)}/day</b></div>
+          <div class="rec-body">${esc(r.reason)}</div>
+        </div>`;
+      }).join('')}
+      <div class="btn-row" style="margin-top:10px;">
+        <button class="btn" id="applyRecBtn">Apply new budgets</button>
+        <button class="btn secondary" id="dismissRecBtn">Not now</button>
+      </div>
+      <div class="muted" style="margin-top:8px;">“Apply” updates the daily budgets saved here — you still change the actual budgets inside Google, Meta, etc.</div>
+    </div>`;
+  $('optResult').innerHTML = html;
+  $('applyRecBtn').addEventListener('click', applyRecommendation);
+  $('dismissRecBtn').addEventListener('click', () => { recordRun(false); lastRun = null; $('optResult').innerHTML = ''; renderAll(); });
+});
+function applyRecommendation() {
+  if (!lastRun) return;
+  lastRun.rows.forEach(r => { const s = sourceById(r.src.id); if (s) s.dailyBudget = r.rec; });
+  recordRun(true);
+  lastRun = null;
+  $('optResult').innerHTML = `<div class="banner" style="border-left-color:var(--good);">✅ Budgets updated. Now go set these amounts in each ad platform.</div>`;
+  renderAll();
+}
+function recordRun(applied) {
+  if (!lastRun) return;
+  state.recs.unshift({
+    id: uid(), date: todayStr(), lookback: lastRun.lookback, applied,
+    rows: lastRun.rows.map(r => ({ name: r.src.name, cur: r.cur, rec: r.rec })),
+    note: lastRun.note,
+  });
+  state.recs = state.recs.slice(0, 26);
+  state.settings.lastRunAt = new Date().toISOString();
+  save();
+}
+function renderRecHistory() {
+  if (!state.recs.length) { $('recHistory').innerHTML = `<div class="empty">Run your first weekly analysis and it’ll be logged here.</div>`; return; }
+  $('recHistory').innerHTML = state.recs.map(rec => `
+    <div class="row">
+      <div class="grow">
+        <div class="title">${fmtDate(rec.date)} ${rec.applied ? '<span class="tag" style="color:var(--good);border-color:var(--good)">applied</span>' : '<span class="tag">viewed</span>'}</div>
+        <div class="meta">${rec.rows.map(r => `${esc(r.name)} ${fmt$(r.cur)}→${fmt$(r.rec)}`).join(' · ')}</div>
+      </div>
+    </div>`).join('');
+}
+
+/* ═══════════════════════ settings ═══════════════════════ */
+function renderSettings() {
+  $('setLookback').value = String(state.settings.lookbackDays);
+  $('setFloor').value = state.settings.minFloor;
+  $('setMaxShift').value = state.settings.maxShiftPct;
+  const srcs = state.sources;
+  $('sourceList').innerHTML = srcs.length ? srcs.map(s => `
+    <div class="row" style="${s.archived ? 'opacity:0.5;' : ''}">
+      <div class="grow" data-edit-src="${s.id}" style="cursor:pointer;">
+        <div class="title"><span class="dot" style="display:inline-block;background:${sourceColor(s)};vertical-align:-1px;"></span> ${esc(s.name)}${s.archived ? ' <span class="tag">archived</span>' : ''}</div>
+        <div class="meta">${fmt$(s.dailyBudget)}/day budget</div>
+      </div>
+      <button class="btn secondary sm" data-edit-src-btn="${s.id}">Edit</button>
+    </div>`).join('') : `<div class="empty">No sources yet.</div>`;
+}
+$('sourceList').addEventListener('click', e => {
+  const el = e.target.closest('[data-edit-src], [data-edit-src-btn]'); if (!el) return;
+  const id = el.dataset.editSrc || el.dataset.editSrcBtn;
+  const s = sourceById(id); if (s) openSourceModal(s);
+});
+$('addSourceBtn').addEventListener('click', () => openSourceModal(null));
+$('saveSettingsBtn').addEventListener('click', () => {
+  state.settings.lookbackDays = parseInt($('setLookback').value, 10) || 30;
+  state.settings.minFloor = Math.max(0, parseFloat($('setFloor').value) || 0);
+  state.settings.maxShiftPct = Math.min(100, Math.max(5, parseInt($('setMaxShift').value, 10) || 25));
+  save(); renderAll();
+  alert('Settings saved.');
+});
+
+/* backup */
+$('exportBtn').addEventListener('click', () => {
+  const blob = new Blob([JSON.stringify(state, null, 2)], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'ad-budget-optimizer-' + todayStr() + '.json';
+  a.click();
+  URL.revokeObjectURL(a.href);
+});
+$('importBtn').addEventListener('click', () => $('importFile').click());
+$('importFile').addEventListener('change', e => {
+  const f = e.target.files[0]; if (!f) return;
+  const reader = new FileReader();
+  reader.onload = () => {
+    try {
+      const d = JSON.parse(reader.result);
+      if (!d || !Array.isArray(d.sources)) throw new Error('bad');
+      if (!confirm('Replace ALL current data with this backup?')) return;
+      state = d; save(); renderAll();
+      alert('Backup imported.');
+    } catch (err) { alert('That file doesn’t look like a valid backup.'); }
+  };
+  reader.readAsText(f);
+  e.target.value = '';
+});
+$('resetBtn').addEventListener('click', () => {
+  if (!confirm('Erase ALL data? This cannot be undone.')) return;
+  if (!confirm('Really sure? Export a backup first if in doubt.')) return;
+  state = defaults(); save(); renderAll();
+});
+
+/* ═══════════════════════ modals ═══════════════════════ */
+function openModal(html) { $('modalBox').innerHTML = html; $('overlay').classList.add('open'); }
+function closeModal() { $('overlay').classList.remove('open'); }
+$('overlay').addEventListener('click', e => { if (e.target === $('overlay')) closeModal(); });
+
+/* — lead modal (add / edit) — */
+function openLeadModal(lead) {
+  const isEdit = !!lead;
+  const srcs = activeSources();
+  if (!srcs.length) { alert('Add an ad source first (Settings tab).'); return; }
+  openModal(`
+    <h3>${isEdit ? 'Edit lead' : 'New lead'}</h3>
+    <label class="f">Name / job</label>
+    <input id="mLeadName" type="text" placeholder="e.g. Sarah — gutter cleaning" value="${isEdit ? esc(lead.name) : ''}">
+    <div class="f2">
+      <div><label class="f">Source</label>
+        <select id="mLeadSource">${srcs.map(s => `<option value="${s.id}" ${isEdit && lead.sourceId===s.id?'selected':''}>${esc(s.name)}</option>`).join('')}</select>
+      </div>
+      <div><label class="f">Date</label><input id="mLeadDate" type="date" value="${isEdit ? lead.date : todayStr()}"></div>
+    </div>
+    <label class="f">Phone (optional)</label>
+    <input id="mLeadPhone" type="tel" value="${isEdit ? esc(lead.phone || '') : ''}">
+    <label class="f">Notes (optional)</label>
+    <input id="mLeadNotes" type="text" value="${isEdit ? esc(lead.notes || '') : ''}">
+    <div class="btn-row" style="margin-top:14px;">
+      <button class="btn" id="mLeadSave">${isEdit ? 'Save' : 'Add lead'}</button>
+      ${isEdit ? '<button class="btn danger" id="mLeadDelete">Delete</button>' : '<button class="btn secondary" id="mLeadCancel">Cancel</button>'}
+    </div>`);
+  $('mLeadSave').addEventListener('click', () => {
+    const name = $('mLeadName').value.trim();
+    if (!name) { alert('Give the lead a name.'); return; }
+    if (isEdit) {
+      lead.name = name; lead.sourceId = $('mLeadSource').value; lead.date = $('mLeadDate').value || todayStr();
+      lead.phone = $('mLeadPhone').value.trim(); lead.notes = $('mLeadNotes').value.trim();
+    } else {
+      state.leads.push({ id: uid(), sourceId: $('mLeadSource').value, date: $('mLeadDate').value || todayStr(),
+        name, phone: $('mLeadPhone').value.trim(), notes: $('mLeadNotes').value.trim(), status: 'new', job: null });
+    }
+    save(); closeModal(); renderAll();
+  });
+  if (isEdit) $('mLeadDelete').addEventListener('click', () => {
+    if (!confirm('Delete this lead?')) return;
+    state.leads = state.leads.filter(l => l.id !== lead.id);
+    save(); closeModal(); renderAll();
+  });
+  else $('mLeadCancel').addEventListener('click', closeModal);
+}
+$('addLeadBtn').addEventListener('click', () => openLeadModal(null));
+$('headerAddBtn').addEventListener('click', () => openLeadModal(null));
+
+/* — job (won) modal — */
+function openJobModal(lead) {
+  const j = lead.job || { freq: 'onetime', amount: '' };
+  openModal(`
+    <h3>🎉 Job landed — ${esc(lead.name)}</h3>
+    <div class="muted">Enter the price so ROAS can count it.</div>
+    <div class="f2">
+      <div><label class="f">Price ($)</label><input id="mJobAmount" type="number" inputmode="decimal" min="0" step="0.01" value="${j.amount || ''}"></div>
+      <div><label class="f">Billing</label>
+        <select id="mJobFreq">${Object.entries(FREQ).map(([k, f]) => `<option value="${k}" ${j.freq===k?'selected':''}>${f.label}</option>`).join('')}</select>
+      </div>
+    </div>
+    <div class="muted" style="margin-top:8px;" id="mJobAnnual"></div>
+    <div class="btn-row" style="margin-top:14px;">
+      <button class="btn" id="mJobSave">Save job</button>
+      <button class="btn secondary" id="mJobCancel">Cancel</button>
+    </div>`);
+  const updateAnnual = () => {
+    const amt = parseFloat($('mJobAmount').value) || 0;
+    const freq = $('mJobFreq').value;
+    $('mJobAnnual').textContent = freq === 'onetime'
+      ? (amt ? `Counts as ${fmt$(amt)} toward ROAS.` : '')
+      : (amt ? `Recurring: ${fmt$(amt)} ${FREQ[freq].label.toLowerCase()} = ${fmt$(amt * FREQ[freq].mult)} first-year value toward ROAS.` : '');
+  };
+  $('mJobAmount').addEventListener('input', updateAnnual);
+  $('mJobFreq').addEventListener('change', updateAnnual);
+  updateAnnual();
+  $('mJobSave').addEventListener('click', () => {
+    const amount = parseFloat($('mJobAmount').value);
+    if (!(amount > 0)) { alert('Enter the job price.'); return; }
+    lead.job = { freq: $('mJobFreq').value, amount };
+    lead.status = 'won';
+    lead.wonDate = todayStr();
+    save(); closeModal(); renderAll();
+  });
+  $('mJobCancel').addEventListener('click', () => { closeModal(); renderAll(); });
+}
+
+/* — source modal — */
+function openSourceModal(src) {
+  const isEdit = !!src;
+  openModal(`
+    <h3>${isEdit ? 'Edit source' : 'New ad source'}</h3>
+    <label class="f">Name</label>
+    <input id="mSrcName" type="text" placeholder="e.g. Google LSA, Meta, TextBlast, Nextdoor…" value="${isEdit ? esc(src.name) : ''}">
+    <label class="f">Current daily budget ($/day)</label>
+    <input id="mSrcBudget" type="number" inputmode="decimal" min="0" step="1" value="${isEdit ? src.dailyBudget : '10'}">
+    <div class="btn-row" style="margin-top:14px;">
+      <button class="btn" id="mSrcSave">${isEdit ? 'Save' : 'Add source'}</button>
+      ${isEdit ? `<button class="btn secondary" id="mSrcArchive">${src.archived ? 'Unarchive' : 'Archive'}</button>` : '<button class="btn secondary" id="mSrcCancel">Cancel</button>'}
+    </div>
+    ${isEdit ? '<div class="muted" style="margin-top:8px;">Archiving hides it from dashboards and the optimizer but keeps its history.</div>' : ''}`);
+  $('mSrcSave').addEventListener('click', () => {
+    const name = $('mSrcName').value.trim();
+    const budget = Math.max(0, parseFloat($('mSrcBudget').value) || 0);
+    if (!name) { alert('Give the source a name.'); return; }
+    if (isEdit) { src.name = name; src.dailyBudget = budget; }
+    else state.sources.push({ id: uid(), name, dailyBudget: budget, archived: false, createdAt: new Date().toISOString() });
+    save(); closeModal(); renderAll();
+  });
+  if (isEdit) $('mSrcArchive').addEventListener('click', () => { src.archived = !src.archived; save(); closeModal(); renderAll(); });
+  else $('mSrcCancel').addEventListener('click', closeModal);
+}
+
+/* ═══════════════════════ render all ═══════════════════════ */
+function renderAll() {
+  const total = activeSources().reduce((a, s) => a + (s.dailyBudget || 0), 0);
+  $('headerSub').textContent = total > 0 ? fmt$(total) + '/day across ' + activeSources().length + ' sources' : 'Track spend → leads → jobs → ROAS';
+  renderDash();
+  renderLeads();
+  renderSpendForm();
+  renderSpendList();
+  renderAllocation();
+  renderRecHistory();
   renderSettings();
 }
-
-function renderSettings() {
-  const wrap = document.getElementById('bgPreviewWrap');
-  if (settings.backgroundImage) {
-    document.getElementById('bgPreviewImg').src = settings.backgroundImage;
-    wrap.style.display = 'block';
-  } else {
-    wrap.style.display = 'none';
-  }
-  initColorPickers();
-}
-
-function clearAllData() {
-  if (!confirm('Remove ALL products and rankings? This cannot be undone.')) return;
-  products = []; ranking = [];
-  save(); saveRanking();
-  renderProducts();
-  renderTop10();
-}
-
-/* ════════════════════════════════════════
-   PAGE ROUTER
-════════════════════════════════════════ */
-function showPage(page) {
-  document.querySelectorAll('.page').forEach(p => p.style.display = 'none');
-  document.getElementById('page-' + page).style.display = 'block';
-  document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
-  document.querySelectorAll('.nav-tab')[['products','top10','settings'].indexOf(page)].classList.add('active');
-
-  const onProducts = page === 'products';
-  document.getElementById('headerSearch').style.display  = onProducts ? 'flex'         : 'none';
-  document.getElementById('addHeaderBtn').style.display  = onProducts ? 'inline-block' : 'none';
-
-  if (page === 'top10')    renderTop10();
-  if (page === 'settings') renderSettings();
-}
-
-/* ════════════════════════════════════════
-   PRODUCTS PAGE
-════════════════════════════════════════ */
-function renderProducts() {
-  const grid      = document.getElementById('productGrid');
-  const empty     = document.getElementById('emptyState');
-  const resultsBar = document.getElementById('resultsBar');
-  const search    = document.getElementById('searchInput').value.trim().toLowerCase();
-  const budgetRaw = document.getElementById('budgetInput').value.trim();
-  const budget    = budgetRaw !== '' ? parseFloat(budgetRaw) : null;
-  const badge     = document.getElementById('budgetBadge');
-  const clearBtn  = document.getElementById('budgetClear');
-
-  if (budget !== null && !isNaN(budget) && budget >= 0) {
-    clearBtn.style.display = 'inline';
-  } else {
-    badge.style.display = 'none';
-    clearBtn.style.display = 'none';
-  }
-
-  if (products.length === 0) {
-    grid.innerHTML = '';
-    empty.style.display = 'block';
-    resultsBar.style.display = 'none';
-    return;
-  }
-  empty.style.display = 'none';
-
-  let list = search
-    ? products.filter(p => p.title.toLowerCase().includes(search))
-    : [...products];
-
-  if (budget !== null && !isNaN(budget)) {
-    list.sort((a, b) => {
-      const aIn = parseFloat(a.price) <= budget;
-      const bIn = parseFloat(b.price) <= budget;
-      if (aIn !== bIn) return aIn ? -1 : 1;
-      return parseFloat(a.price) - parseFloat(b.price);
-    });
-    const inCount = list.filter(p => parseFloat(p.price) <= budget).length;
-    badge.style.display = 'inline';
-    badge.textContent = `${inCount} of ${list.length} within $${budget.toFixed(2)}`;
-  }
-
-  resultsBar.style.display = 'block';
-  resultsBar.innerHTML = `Showing <span>${list.length}</span> item${list.length !== 1 ? 's' : ''}${search ? ` for "<strong>${esc(search)}</strong>"` : ''}`;
-
-  grid.innerHTML = '';
-  list.forEach(p => {
-    const price = parseFloat(p.price);
-    const showTag  = budget !== null && !isNaN(budget);
-    const inBudget = showTag && price <= budget;
-    const outBudget = showTag && price > budget;
-    const [whole, frac] = price.toFixed(2).split('.');
-
-    const card = document.createElement('div');
-    card.className = 'product-card' + (outBudget ? ' out-of-budget' : '');
-    card.onclick = () => openDetail(p.id);
-    card.innerHTML = `
-      ${showTag && inBudget ? '<div class="in-budget-tag">✓ In Budget</div>' : ''}
-      ${outBudget ? '<div class="over-budget-tag">Over Budget</div>' : ''}
-      <div class="product-img-wrap">
-        <img src="${esc(p.image)}" alt="${esc(p.title)}" onerror="${noImgSvg()}">
-      </div>
-      <div class="product-info">
-        <div class="product-title">${esc(p.title)}</div>
-        <div class="product-price-row">
-          <span class="price-symbol">$</span>
-          <span class="price-whole">${whole}</span>
-          <span class="price-frac">${frac}</span>
-        </div>
-        <button class="add-to-cart-mini" onclick="event.stopPropagation(); window.open('${esc(p.url)}','_blank')">View Product</button>
-      </div>
-    `;
-    grid.appendChild(card);
-  });
-}
-
-function clearBudget() {
-  document.getElementById('budgetInput').value = '';
-  renderProducts();
-}
-
-/* ════════════════════════════════════════
-   DETAIL MODAL
-════════════════════════════════════════ */
-function openDetail(id) {
-  const p = products.find(x => x.id === id);
-  if (!p) return;
-
-  const budgetRaw = document.getElementById('budgetInput').value.trim();
-  const budget = budgetRaw !== '' ? parseFloat(budgetRaw) : null;
-  const price  = parseFloat(p.price);
-  const [whole, frac] = price.toFixed(2).split('.');
-
-  let budgetBanner = '';
-  if (budget !== null && !isNaN(budget)) {
-    budgetBanner = price <= budget
-      ? `<div class="budget-banner within">✓ Fits within your $${budget.toFixed(2)} budget</div>`
-      : `<div class="budget-banner over">✗ $${(price - budget).toFixed(2)} over your $${budget.toFixed(2)} budget</div>`;
-  }
-
-  const imgs   = (p.images && p.images.length > 1) ? p.images : (p.image ? [p.image] : []);
-  const thumbs = imgs.map((src, i) =>
-    `<img class="detail-thumb${i===0?' active':''}" src="${esc(src)}"
-      onclick="swapMainImg(this,'${esc(src)}')" onerror="this.style.display='none'">`
-  ).join('');
-
-  const features = p.features && p.features.length
-    ? `<div class="detail-features"><h4>About this item</h4><ul>${p.features.map(f=>`<li>${esc(f)}</li>`).join('')}</ul></div>`
-    : p.description
-      ? `<div class="detail-features"><h4>Description</h4><p class="detail-description">${esc(p.description)}</p></div>`
-      : '';
-
-  document.getElementById('detailBody').innerHTML = `
-    <div class="detail-img-panel">
-      <img class="detail-main-img" id="detailMainImg" src="${esc(imgs[0]||'')}" onerror="${noImgSvg()}">
-      ${imgs.length > 1 ? `<div class="detail-thumbnails">${thumbs}</div>` : ''}
-    </div>
-    <div class="detail-info-panel">
-      <div class="detail-title">${esc(p.title)}</div>
-      <div class="detail-stars">★★★★★</div>
-      <hr class="detail-divider">
-      ${budgetBanner}
-      ${price === 0 || p.price === '0.00'
-        ? `<div class="price-missing-note">⚠ Price not found — tap <strong>Edit Product</strong> below to add it.</div>`
-        : `<div class="detail-price-big">$${whole}<sup style="font-size:16px">.${frac}</sup></div>`
-      }
-      <div class="detail-stock">In Stock</div>
-      <a href="${esc(p.url)}" target="_blank" style="text-decoration:none">
-        <button class="detail-buy-btn">🛒 Add to Cart</button>
-      </a>
-      <a href="${esc(p.url)}" target="_blank" style="text-decoration:none">
-        <button class="detail-buy-now-btn">⚡ Buy Now</button>
-      </a>
-      ${features}
-      <button class="detail-edit-btn" onclick="openEdit('${p.id}')">✏️ Edit Product</button>
-      <button class="detail-remove-btn" onclick="removeProduct('${p.id}')">🗑 Remove from Wishlist</button>
-    </div>
-  `;
-  document.getElementById('detailModal').classList.add('active');
-}
-
-function swapMainImg(thumb, src) {
-  document.getElementById('detailMainImg').src = src;
-  document.querySelectorAll('.detail-thumb').forEach(t => t.classList.remove('active'));
-  thumb.classList.add('active');
-}
-
-function closeDetailModal() { document.getElementById('detailModal').classList.remove('active'); }
-
-/* ════════════════════════════════════════
-   EDIT PRODUCT
-════════════════════════════════════════ */
-function openEdit(id) {
-  const p = products.find(x => x.id === id);
-  if (!p) return;
-  document.getElementById('editId').value    = p.id;
-  document.getElementById('editTitle').value = p.title || '';
-  document.getElementById('editPrice').value = (p.price && p.price !== '0.00') ? p.price : '';
-  document.getElementById('editImage').value = p.image || '';
-  document.getElementById('editUrl').value   = p.url   || '';
-  document.getElementById('editDesc').value  = p.description || '';
-  // Reset image upload area
-  document.getElementById('editImageFile').value = '';
-  document.getElementById('editImagePreview').style.display = 'none';
-  document.getElementById('editImageUploadBtn').textContent = '📷 Upload Photo';
-  // If current image is a data URL (previously uploaded), show preview
-  if (p.image && p.image.startsWith('data:')) {
-    showEditPreview(p.image);
-  }
-  document.getElementById('editModal').classList.add('active');
-}
-
-function closeEditModal() { document.getElementById('editModal').classList.remove('active'); }
-
-// When user types in the URL field, hide the upload preview
-function editImageUrlChanged() {
-  const val = document.getElementById('editImage').value.trim();
-  if (val && !val.startsWith('data:')) {
-    document.getElementById('editImagePreview').style.display = 'none';
-    document.getElementById('editImageUploadBtn').textContent = '📷 Upload Photo';
-    document.getElementById('editImageFile').value = '';
-  }
-}
-
-function handleEditImageUpload(e) {
-  const file = e.target.files[0];
-  if (!file) return;
-  const reader = new FileReader();
-  reader.onload = function(ev) {
-    const img = new Image();
-    img.onload = function() {
-      // Resize to max 800px to keep localStorage small
-      const canvas = document.createElement('canvas');
-      const MAX = 800;
-      let w = img.width, h = img.height;
-      if (w > MAX || h > MAX) {
-        if (w > h) { h = Math.round(h * MAX / w); w = MAX; }
-        else        { w = Math.round(w * MAX / h); h = MAX; }
-      }
-      canvas.width = w; canvas.height = h;
-      canvas.getContext('2d').drawImage(img, 0, 0, w, h);
-      const dataUrl = canvas.toDataURL('image/jpeg', 0.80);
-      // Put data URL in image field and show preview
-      document.getElementById('editImage').value = dataUrl;
-      showEditPreview(dataUrl);
-    };
-    img.src = ev.target.result;
-  };
-  reader.readAsDataURL(file);
-  e.target.value = '';
-}
-
-function showEditPreview(src) {
-  document.getElementById('editImagePreviewImg').src = src;
-  document.getElementById('editImagePreview').style.display = 'block';
-  document.getElementById('editImageUploadBtn').textContent = '📷 Change Photo';
-}
-
-function clearEditImage() {
-  document.getElementById('editImage').value = '';
-  document.getElementById('editImagePreview').style.display = 'none';
-  document.getElementById('editImageUploadBtn').textContent = '📷 Upload Photo';
-  document.getElementById('editImageFile').value = '';
-}
-
-function saveEdit() {
-  const id = document.getElementById('editId').value;
-  const p  = products.find(x => x.id === id);
-  if (!p) return;
-
-  const title = document.getElementById('editTitle').value.trim();
-  if (!title) { alert('Title cannot be empty.'); return; }
-
-  const priceRaw = document.getElementById('editPrice').value.trim();
-  const price    = parseFloat(priceRaw);
-  const newImage = document.getElementById('editImage').value.trim();
-
-  p.title       = title;
-  p.price       = isNaN(price) || priceRaw === '' ? '0.00' : price.toFixed(2);
-  p.image       = newImage;
-  p.url         = document.getElementById('editUrl').value.trim() || p.url;
-  p.description = document.getElementById('editDesc').value.trim();
-  if (newImage) p.images = [newImage, ...p.images.filter(i => i !== newImage)];
-
-  save();
-  renderProducts();
-  closeEditModal();
-  // Refresh the detail view with updated data
-  openDetail(id);
-}
-
-function removeProduct(id) {
-  if (!confirm('Remove this item from your wishlist?')) return;
-  products = products.filter(p => p.id !== id);
-  ranking  = ranking.filter(r => r !== id);
-  save(); saveRanking();
-  closeDetailModal();
-  renderProducts();
-}
-
-/* ════════════════════════════════════════
-   TOP 10 PAGE
-════════════════════════════════════════ */
-function renderTop10() {
-  ranking = ranking.filter(id => products.find(p => p.id === id));
-  saveRanking();
-
-  const container = document.getElementById('rankingContainer');
-  container.innerHTML = '';
-
-  if (products.length === 0) {
-    container.innerHTML = `
-      <div class="white-box top10-empty">
-        <p>Add products to your wishlist first, then rank them here.</p>
-        <button class="rank-add-btn" style="max-width:260px;margin:0 auto" onclick="showPage('products')">🛍 Go to Products</button>
-      </div>`;
-    return;
-  }
-
-  const sortableList = document.createElement('div');
-  sortableList.id = 'sortableRankList';
-
-  ranking.forEach((id, i) => {
-    const p = products.find(x => x.id === id);
-    if (!p) return;
-    sortableList.appendChild(makeRankItem(p, i + 1));
-  });
-
-  container.appendChild(sortableList);
-
-  // Empty slots
-  for (let i = ranking.length; i < 10; i++) {
-    const slot = document.createElement('div');
-    slot.className = 'rank-empty-slot';
-    slot.innerHTML = `<div class="rank-empty-num">${i + 1}</div><span style="color:#aaa;font-size:14px">Empty slot</span>`;
-    container.appendChild(slot);
-  }
-
-  // Add button
-  if (ranking.length < 10) {
-    const btn = document.createElement('button');
-    btn.className = 'rank-add-btn';
-    btn.textContent = `+ Add to Ranking (${ranking.length}/10)`;
-    btn.onclick = openPickerModal;
-    container.appendChild(btn);
-  }
-
-  if (rankingSortable) rankingSortable.destroy();
-  rankingSortable = new Sortable(sortableList, {
-    animation: 180,
-    handle: '.drag-handle',
-    ghostClass: 'sortable-ghost',
-    chosenClass: 'sortable-chosen',
-    onEnd: function() {
-      const items = sortableList.querySelectorAll('.rank-item');
-      ranking = Array.from(items).map(el => el.dataset.id);
-      saveRanking();
-      items.forEach((el, idx) => {
-        const num = el.querySelector('.rank-number');
-        num.textContent = idx + 1;
-        num.className = 'rank-number ' + medalClass(idx);
-      });
-    }
-  });
-}
-
-function makeRankItem(p, rank) {
-  const el = document.createElement('div');
-  el.className = 'rank-item';
-  el.dataset.id = p.id;
-  el.innerHTML = `
-    <div class="rank-number ${medalClass(rank-1)}">${rank}</div>
-    <span class="drag-handle">⠿⠿</span>
-    <img class="rank-img" src="${esc(p.image)}" alt="${esc(p.title)}" onerror="${noImgSvg()}">
-    <div class="rank-info">
-      <div class="rank-title">${esc(p.title)}</div>
-      <div class="rank-price">${p.price ? '$' + p.price : 'No price'}</div>
-    </div>
-    <button class="rank-remove" onclick="removeFromRanking('${p.id}')">✕</button>
-  `;
-  return el;
-}
-
-function medalClass(i) {
-  if (i === 0) return 'gold';
-  if (i === 1) return 'silver';
-  if (i === 2) return 'bronze';
-  return '';
-}
-
-function removeFromRanking(id) {
-  ranking = ranking.filter(r => r !== id);
-  saveRanking();
-  renderTop10();
-}
-
-function openPickerModal() {
-  const ranked = new Set(ranking);
-  const available = products.filter(p => !ranked.has(p.id));
-  const grid = document.getElementById('pickerGrid');
-  if (available.length === 0) {
-    grid.innerHTML = '<p style="color:#666;font-size:14px;grid-column:1/-1">All products are already in your ranking.</p>';
-  } else {
-    grid.innerHTML = available.map(p => `
-      <div class="picker-item" onclick="addToRanking('${p.id}')">
-        <img src="${esc(p.image)}" alt="${esc(p.title)}" onerror="${noImgSvg()}">
-        <div class="picker-item-title">${esc(p.title)}</div>
-        <div class="picker-item-price">${p.price ? '$' + p.price : ''}</div>
-      </div>
-    `).join('');
-  }
-  document.getElementById('pickerModal').classList.add('active');
-}
-
-function closePickerModal() { document.getElementById('pickerModal').classList.remove('active'); }
-
-function addToRanking(id) {
-  if (ranking.length >= 10 || ranking.includes(id)) return;
-  ranking.push(id);
-  saveRanking();
-  closePickerModal();
-  renderTop10();
-}
-
-/* ════════════════════════════════════════
-   ADD PRODUCT MODAL
-════════════════════════════════════════ */
-function openAddModal() {
-  pendingProduct = null;
-  document.getElementById('amazonUrlInput').value = '';
-  document.getElementById('fetchStatus').textContent = '';
-  document.getElementById('fetchStatus').className = 'fetch-status';
-  document.getElementById('fetchPreview').className = 'fetch-preview';
-  document.getElementById('confirmBtn').style.display = 'none';
-  document.getElementById('fetchBtn').disabled = false;
-  document.getElementById('manualSection').className = 'manual-section';
-  ['manualTitle','manualPrice','manualImage','manualUrl','manualDesc'].forEach(id => {
-    document.getElementById(id).value = '';
-  });
-  document.getElementById('addModal').classList.add('active');
-  setTimeout(() => document.getElementById('amazonUrlInput').focus(), 100);
-}
-
-function closeAddModal() { document.getElementById('addModal').classList.remove('active'); }
-function toggleManual()  { document.getElementById('manualSection').classList.toggle('visible'); }
-
-/* ── Fetch from any URL ── */
-async function fetchProduct() {
-  const rawUrl = document.getElementById('amazonUrlInput').value.trim();
-  if (!rawUrl) { setStatus('Please paste a product URL.', 'error'); return; }
-
-  try { new URL(rawUrl); } catch(e) {
-    setStatus('Please enter a valid URL (starting with https://).', 'error'); return;
-  }
-
-  setStatus('<span class="spinner"></span>Fetching product info…', '');
-  document.getElementById('fetchBtn').disabled = true;
-  document.getElementById('fetchPreview').className = 'fetch-preview';
-  document.getElementById('confirmBtn').style.display = 'none';
-  pendingProduct = null;
-
-  let product = null;
-
-  // ── Step 1: try microlink.io (most reliable, works on most sites) ──
-  try {
-    setStatus('<span class="spinner"></span>Trying metadata service…', '');
-    const meta = await fetchViaMicrolink(rawUrl);
-    if (meta && meta.title && meta.title.length > 1) {
-      // Got title + image from microlink — now try proxies just for price
-      setStatus('<span class="spinner"></span>Got info, looking for price…', '');
-      const html = await fetchViaProxy(rawUrl);
-      let price = '0.00';
-      if (html) {
-        const parsed = parseProductPage(html, rawUrl);
-        price = parsed.price || '0.00';
-      }
-      product = {
-        id:          Date.now().toString(),
-        title:       meta.title,
-        price:       price,
-        image:       meta.image,
-        images:      meta.image ? [meta.image] : [],
-        features:    [],
-        description: meta.description,
-        url:         rawUrl,
-      };
-    }
-  } catch(e) {
-    console.warn('microlink failed:', e.message);
-  }
-
-  // ── Step 2: if microlink failed, try raw HTML proxies ──
-  if (!product) {
-    setStatus('<span class="spinner"></span>Trying backup method…', '');
-    try {
-      const html = await fetchViaProxy(rawUrl);
-      if (html && html.length > 200) {
-        const parsed = parseProductPage(html, rawUrl);
-        if (parsed.title && parsed.title.length > 1) product = parsed;
-      }
-    } catch(e) {
-      console.warn('HTML proxy failed:', e.message);
-    }
-  }
-
-  document.getElementById('fetchBtn').disabled = false;
-
-  if (!product || !product.title || product.title.length < 2) {
-    setStatus('Could not automatically fetch this product. The site may be blocking access. Please enter the details manually below.', 'error');
-    document.getElementById('manualSection').classList.add('visible');
-    // Pre-fill the URL field in manual section
-    document.getElementById('manualUrl').value = rawUrl;
-    return;
-  }
-
-  // If price is 0 or missing, show a note
-  const priceNote = (!product.price || product.price === '0.00')
-    ? ' Price not found — you can edit it after adding.'
-    : '';
-
-
-  pendingProduct = product;
-  document.getElementById('previewImg').src = product.image || '';
-  document.getElementById('previewTitle').textContent = product.title;
-  document.getElementById('previewPrice').textContent = product.price && product.price !== '0.00' ? `$${product.price}` : 'Price not found';
-  document.getElementById('fetchPreview').className = 'fetch-preview visible';
-  document.getElementById('confirmBtn').style.display = 'block';
-  setStatus('✓ Product found!' + priceNote, 'success');
-}
-
-/* ── Parse any product page ── */
-function parseProductPage(html, originalUrl) {
-  const doc  = new DOMParser().parseFromString(html, 'text/html');
-  const host = (() => { try { return new URL(originalUrl).hostname; } catch(e) { return ''; } })();
-  const isAmazon = host.includes('amazon.');
-
-  // ── Open Graph (works on most sites) ──
-  const og = k => doc.querySelector(`meta[property="${k}"]`)?.content?.trim() || '';
-  const ogTitle = og('og:title');
-  const ogImage = og('og:image');
-  const ogDesc  = og('og:description');
-  const ogPrice = og('product:price:amount') || og('og:price:amount');
-
-  // ── JSON-LD structured data (schema.org/Product) ──
-  let ldTitle = '', ldImage = '', ldPrice = '', ldDesc = '', ldFeatures = [];
-  doc.querySelectorAll('script[type="application/ld+json"]').forEach(s => {
-    try {
-      let data = JSON.parse(s.textContent);
-      if (Array.isArray(data)) data = data.find(d => d['@type'] === 'Product') || {};
-      if (data['@type'] === 'Product') {
-        ldTitle = data.name || '';
-        ldImage = Array.isArray(data.image) ? data.image[0] : (data.image || '');
-        const offers = Array.isArray(data.offers) ? data.offers[0] : data.offers;
-        ldPrice = offers?.price ? String(offers.price) : '';
-        ldDesc  = data.description || '';
-      }
-    } catch(e) {}
-  });
-
-  // ── Amazon-specific selectors ──
-  let amTitle = '', amPrice = '', amImages = [], amFeatures = [], amDesc = '';
-  if (isAmazon) {
-    const titleEl = doc.querySelector('#productTitle, #title');
-    amTitle = titleEl ? titleEl.textContent.trim() : '';
-
-    for (const sel of ['.a-price .a-offscreen','#priceblock_ourprice','#priceblock_dealprice','#price_inside_buybox','.a-price-whole','.a-color-price']) {
-      const el = doc.querySelector(sel);
-      if (el) {
-        const num = parseFloat(el.textContent.replace(/[^0-9.]/g, ''));
-        if (!isNaN(num) && num > 0) { amPrice = num.toFixed(2); break; }
-      }
-    }
-
-    // Amazon images via data-a-dynamic-image
-    const imgEl = doc.querySelector('#landingImage, #imgBlkFront, .a-dynamic-image');
-    if (imgEl) {
-      const dynRaw = imgEl.getAttribute('data-a-dynamic-image');
-      if (dynRaw) {
-        try {
-          const obj = JSON.parse(dynRaw);
-          amImages = Object.entries(obj).sort((a,b) => (b[1][0]*b[1][1]) - (a[1][0]*a[1][1])).map(e => e[0]);
-        } catch(e) {}
-      }
-      if (!amImages.length) {
-        const src = imgEl.getAttribute('src') || imgEl.getAttribute('data-src');
-        if (src) amImages = [src];
-      }
-    }
-    // Also try colorImages JSON in scripts
-    if (!amImages.length) {
-      doc.querySelectorAll('script').forEach(s => {
-        const m = s.textContent.match(/'colorImages'\s*:\s*\{[^}]*'initial'\s*:\s*(\[[\s\S]*?\])/);
-        if (m) {
-          try { amImages = JSON.parse(m[1]).map(o => o.hiRes || o.large || '').filter(Boolean); } catch(e) {}
-        }
-      });
-    }
-
-    doc.querySelectorAll('#feature-bullets li span.a-list-item').forEach(b => {
-      const t = b.textContent.trim();
-      if (t && t.length > 3) amFeatures.push(t);
-    });
-
-    const descEl = doc.querySelector('#productDescription p, #productDescription');
-    amDesc = descEl ? descEl.textContent.trim().substring(0, 600) : '';
-  }
-
-  // ── General fallbacks (non-Amazon) ──
-  let genTitle = '', genImage = '', genPrice = '', genDesc = '';
-  if (!isAmazon) {
-    genTitle = doc.querySelector('h1')?.textContent?.trim() || doc.title?.trim() || '';
-    genDesc  = doc.querySelector('[class*="description"],[id*="description"]')?.textContent?.trim()?.substring(0, 600) || ogDesc;
-
-    // Try common price selectors
-    for (const sel of ['[class*="price"],[id*="price"],[data-price]','[itemprop="price"]']) {
-      const el = doc.querySelector(sel);
-      if (el) {
-        const raw = (el.getAttribute('content') || el.textContent || '').replace(/[^0-9.]/g, '');
-        const num = parseFloat(raw);
-        if (!isNaN(num) && num > 0) { genPrice = num.toFixed(2); break; }
-      }
-    }
-
-    // Try main product image
-    const imgCandidates = [
-      doc.querySelector('[class*="product"][class*="image"] img, [id*="product"][id*="image"] img'),
-      doc.querySelector('img[src*="product"], img[src*="item"]'),
-      doc.querySelector('article img, main img'),
-    ];
-    for (const img of imgCandidates) {
-      if (img) { genImage = img.src || img.getAttribute('data-src') || ''; if (genImage) break; }
-    }
-  }
-
-  // ── Merge: most specific wins ──
-  const title       = amTitle || ldTitle || ogTitle || genTitle || '';
-  const price       = amPrice || ldPrice || ogPrice || genPrice || '';
-  const image       = amImages[0] || ldImage || ogImage || genImage || '';
-  const images      = amImages.length ? amImages.slice(0, 8) : (image ? [image] : []);
-  const features    = amFeatures.slice(0, 8);
-  const description = amDesc || ldDesc || ogDesc || genDesc || '';
-
-  return {
-    id: Date.now().toString(),
-    title,
-    price: price ? parseFloat(price).toFixed(2) : '0.00',
-    image,
-    images,
-    features,
-    description,
-    url: originalUrl,
-  };
-}
-
-function confirmAddProduct() {
-  if (!pendingProduct) return;
-  products.unshift(pendingProduct);
-  save();
-  renderProducts();
-  closeAddModal();
-}
-
-function saveManual() {
-  const title = document.getElementById('manualTitle').value.trim();
-  const url   = document.getElementById('manualUrl').value.trim();
-  if (!title) { alert('Please enter a product title.'); return; }
-  if (!url)   { alert('Please enter the product URL.'); return; }
-  const price = parseFloat(document.getElementById('manualPrice').value);
-  products.unshift({
-    id: Date.now().toString(),
-    title,
-    price: isNaN(price) ? '0.00' : price.toFixed(2),
-    image: document.getElementById('manualImage').value.trim(),
-    images: [], features: [],
-    description: document.getElementById('manualDesc').value.trim(),
-    url,
-  });
-  save();
-  renderProducts();
-  closeAddModal();
-}
-
-/* ════════════════════════════════════════
-   HELPERS
-════════════════════════════════════════ */
-function setStatus(html, type) {
-  const el = document.getElementById('fetchStatus');
-  el.innerHTML = html;
-  el.className = 'fetch-status' + (type ? ' ' + type : '');
-}
-
-function esc(str) {
-  if (!str) return '';
-  return String(str)
-    .replace(/&/g,'&amp;').replace(/"/g,'&quot;')
-    .replace(/</g,'&lt;').replace(/>/g,'&gt;')
-    .replace(/'/g,'&#39;');
-}
-
-function noImgSvg() {
-  return `this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22120%22 height=%22120%22%3E%3Crect fill=%22%23f0f0f0%22 width=%22120%22 height=%22120%22/%3E%3Ctext x=%2250%25%22 y=%2250%25%22 font-size=%2212%22 text-anchor=%22middle%22 fill=%22%23aaa%22 dominant-baseline=%22middle%22%3ENo Image%3C/text%3E%3C/svg%3E'`;
-}
-
-/* ── Close modals on overlay click ── */
-['addModal','detailModal','pickerModal','editModal'].forEach(id => {
-  document.getElementById(id).addEventListener('click', e => {
-    if (e.target.id === id) document.getElementById(id).classList.remove('active');
-  });
-});
-
-/* ── Enter key to fetch ── */
-document.getElementById('amazonUrlInput').addEventListener('keydown', e => {
-  if (e.key === 'Enter') fetchProduct();
-});
-
-/* ════════════════════════════════════════
-   INIT
-════════════════════════════════════════ */
-applyTheme();
-applyBackground();
-renderProducts();
+renderAll();
 </script>
 </body>
 </html>
